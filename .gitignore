@@ -1,0 +1,13 @@
+# build output
+build/
+*.apk
+*.idsig
+
+# signing key and its password - never commit these
+keystore/
+*.jks
+*.keystore
+
+# local data and test files (product lists, photos)
+private/
+app/assets/_test/
