@@ -265,6 +265,8 @@ details.adv[open]{padding-bottom:6px}
 .scan-aim{position:absolute;left:50%;top:50%;width:min(68vw,300px,70%);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:20px;
   box-shadow:0 0 0 100vmax rgba(0,0,0,.42);border:3px solid rgba(255,255,255,.92);transition:border-color .15s}
 .scan-aim.hit{border-color:#4ade80}
+.scan-aim.focus{animation:aimFocus .45s ease-out}
+@keyframes aimFocus{40%{transform:translate(-50%,-50%) scale(.93)}}
 .scan-aim.small{width:min(52vw,220px,60%)}
 .scan-tip{position:absolute;left:16px;right:16px;bottom:12px;text-align:center;color:#fff;font-size:14px;font-weight:600;text-shadow:0 1px 3px #000;margin:0}
 .scan-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#fff;font-size:15px;background:#111}
@@ -757,7 +759,7 @@ const I18N = {
     modeDeliveryHint: 'Like the daily update, and every product whose stock went up gets the new stock saved as its full stock, so the order list knows how many to get next time.',
     impColumns: 'Columns', impOptions: 'More options',
     skuLabel: 'Item number', codesLabel: 'Barcodes', codesPh: 'scan or type',
-    scanTitle: 'Scan barcode', scanTip: 'Hold the barcode inside the square', torch: 'Light', typeCode: 'Type the code',
+    scanTitle: 'Scan barcode', scanTip: 'Hold the barcode in the square, about 15 cm away. Tap to focus.', torch: 'Light', typeCode: 'Type the code',
     camStarting: 'Starting the camera…', camDenied: 'The camera is not available. Allow it in the phone’s settings, or type the code.',
     scanUnknown: 'Unknown barcode', scanLinkHint: 'Find the product and tap it to link this code to it:', scanSearch: 'Search product',
     scanNewProduct: 'New product with this code', scanNext: 'Scan next', addLabel: 'Add label', unlink: 'Unlink code',
@@ -839,7 +841,7 @@ const I18N = {
     modeDeliveryHint: 'Mint a napi frissítés, és minden terméknél, aminek nőtt a készlete, az új készlet lesz a teljes, így a rendelési lista legközelebb tudja, mennyit kell hozni.',
     impColumns: 'Oszlopok', impOptions: 'További beállítások',
     skuLabel: 'Cikkszám', codesLabel: 'Vonalkódok', codesPh: 'beolvasás vagy beírás',
-    scanTitle: 'Vonalkód beolvasása', scanTip: 'Tartsd a vonalkódot a négyzetbe', torch: 'Lámpa', typeCode: 'Kód beírása',
+    scanTitle: 'Vonalkód beolvasása', scanTip: 'Tartsd a vonalkódot a négyzetben, kb. 15 cm-re. Élesítéshez koppints.', torch: 'Lámpa', typeCode: 'Kód beírása',
     camStarting: 'Kamera indítása…', camDenied: 'A kamera nem érhető el. Engedélyezd a telefon beállításaiban, vagy írd be a kódot.',
     scanUnknown: 'Ismeretlen vonalkód', scanLinkHint: 'Keresd meg a terméket, és koppints rá, hogy ehhez a kódhoz kapcsold:', scanSearch: 'Termék keresése',
     scanNewProduct: 'Új termék ezzel a kóddal', scanNext: 'Következő', addLabel: 'Címke', unlink: 'Kód leválasztása',
@@ -2677,6 +2679,7 @@ function lineRuns(px) {
       if (last && last.s === e.s) { if (e.m > last.m) edges[edges.length - 1] = e; } else edges.push(e);
     }
   }
+  const raw = edges.slice(); // before merging, for reading blurred codes
   const extreme = (j) => { // darkest (bar) or brightest (gap) value between edge j and j + 1
     const dark = edges[j].s < 0;
     let e = dark ? 255 : 0;
@@ -2698,23 +2701,152 @@ function lineRuns(px) {
     ext.splice(worst - 1, 3, dark ? Math.min(ext[worst - 1], ext[worst + 1]) : Math.max(ext[worst - 1], ext[worst + 1]));
     edges.splice(worst, 2);
   }
-  if (!edges.length) return { runs: [n], dark0: false };
+  if (!edges.length) return { runs: [n], dark0: false, v, raw };
   const runs = [edges[0].x];
   for (let j = 1; j < edges.length; j++) runs.push(edges[j].x - edges[j - 1].x);
   runs.push(n - edges[edges.length - 1].x);
-  return { runs, dark0: edges[0].s > 0 };
+  return { runs, dark0: edges[0].s > 0, v, raw };
 }
 function eanInLine(px) {
-  const { runs, dark0 } = lineRuns(px);
-  if (runs.length < 45) return null;
-  const rev = runs.slice().reverse(), revDark0 = (runs.length % 2 === 1) === dark0;
-  for (const [r, d0] of [[runs, dark0], [rev, revDark0]]) {
-    for (let k = d0 ? 2 : 1; k < r.length - 40; k += 2) { // k: bars only (index parity)
-      const code = eanAt(r, k, 13) || eanAt(r, k, 8);
-      if (code) return code;
+  const { runs, dark0, v, raw } = lineRuns(px);
+  if (runs.length >= 45) {
+    const rev = runs.slice().reverse(), revDark0 = (runs.length % 2 === 1) === dark0;
+    for (const [r, d0] of [[runs, dark0], [rev, revDark0]]) {
+      for (let k = d0 ? 2 : 1; k < r.length - 40; k += 2) { // k: bars only (index parity)
+        const code = eanAt(r, k, 13) || eanAt(r, k, 8);
+        if (code) return code;
+      }
     }
   }
-  return null;
+  return eanSoftLine(v, raw);
+}
+
+// Blurred codes (the phone a little too close to focus, or a small code far away): thin bars and gaps fade into
+// grey and their widths can't be measured. The two ends of the code stay clear, because they border the plain
+// margins, so the grid of 95 modules between them is known. Each digit is then the one whose pattern, blurred
+// the same way, looks most like the brightness at its place, and the guard bars must be where they belong.
+// EAN-13 (and UPC-A) only: a short EAN-8 has too little to check such a guess against.
+const SOFT_S = 3, SOFT_SHIFTS = [-0.4, -0.2, 0, 0.2, 0.4]; // samples per module; grid shifts tried, in modules
+// how alike picture and pattern must be (1 = the same): on average, at the least alike digit, and at the guards.
+// Measured on blurred test photos, right readings scored 0.92 / 0.74 / 0.46 or more, wrong ones 0.81 / 0.62 / 0.33 at most.
+const SOFT_MEAN = 0.88, SOFT_WORST = 0.68, SOFT_GUARD = 0.4;
+const phi = (z) => { // normal distribution: P(X < z)
+  const x = Math.abs(z) / Math.SQRT2, t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return z < 0 ? (1 - y) / 2 : (1 + y) / 2;
+};
+// how dark a stretch of modules looks blurred by sg (in modules): mods are the module values (1 = bar, 0.5 =
+// unknown) from 2 modules before the stretch to 2 after; zero mean and unit length, so comparing is a dot product
+function softPattern(mods, sg) {
+  const t = new Float32Array((mods.length - 4) * SOFT_S);
+  let mean = 0, norm = 0;
+  for (let i = 0; i < t.length; i++) {
+    const u = (i + 0.5) / SOFT_S;
+    for (let k = 0; k < mods.length; k++) t[i] += mods[k] * (phi((k - 1 - u) / sg) - phi((k - 2 - u) / sg));
+    mean += t[i] / t.length;
+  }
+  for (let i = 0; i < t.length; i++) { t[i] -= mean; norm += t[i] * t[i]; }
+  for (let i = 0; i < t.length; i++) t[i] /= Math.sqrt(norm);
+  return t;
+}
+// the places read: 12 digits (7 modules each) and the 3 guards, which include the modules around them
+const SOFT_PLACES = [...Array(12)].map((_, g) => ({ at: g < 6 ? 3 + 7 * g : 8 + 7 * g, len: 7, g }))
+  .concat([{ at: -1, len: 5, guard: 0 }, { at: 44, len: 7, guard: 1 }, { at: 91, len: 5, guard: 2 }]);
+const SOFT_GUARDS = [[0, 0, 0, 1, 0, 1, 0, 0.5, 0.5], [0.5, 0.5, 1, 0, 1, 0, 1, 0, 1, 0.5, 0.5], [0.5, 0.5, 0, 1, 0, 1, 0, 0, 0]];
+// per blur: digits[kind], kind 0–9 = L, 10–19 = G, 20–29 = R; guards[0–2]
+const SOFT_TPL = [0.25, 0.45, 0.65, 0.85].map((sg) => ({
+  digits: [...Array(30)].map((_, kind) => {
+    const q = EAN_DIGITS[kind % 10], w = kind >= 10 && kind < 20 ? [q[3], q[2], q[1], q[0]] : q, right = kind >= 20;
+    // a left-half digit always follows a bar and is followed by a gap; a right-half one the other way round
+    const mods = [0.5, right ? 0 : 1];
+    w.forEach((len, i) => { for (let j = 0; j < len; j++) mods.push((i % 2 === 1) !== right ? 1 : 0); });
+    return softPattern(mods.concat(right ? 1 : 0, 0.5), sg);
+  }),
+  guards: SOFT_GUARDS.map((mods) => softPattern(mods, sg)),
+}));
+const dot = (a, b) => { let c = 0; for (let i = 0; i < a.length; i++) c += a[i] * b[i]; return c; };
+// reads an EAN-13 whose outer edges are at x0 and x1 on brightness line v; dir −1: the code is upside down
+function eanSoft(v, x0, x1, dir) {
+  const m = (x1 - x0) / 95;
+  // the picture at each place, for each grid shift
+  const seen = SOFT_PLACES.map((pl) => SOFT_SHIFTS.map((sh) => {
+    const o = new Float32Array(pl.len * SOFT_S);
+    let mean = 0, norm = 0;
+    for (let i = 0; i < o.length; i++) {
+      const p = pl.at + sh + (i + 0.5) / SOFT_S, x = dir > 0 ? x0 + p * m : x1 - p * m;
+      const xi = Math.max(0, Math.min(v.length - 2, Math.floor(x))), f = Math.max(0, Math.min(1, x - xi));
+      o[i] = -(v[xi] * (1 - f) + v[xi + 1] * f);
+      mean += o[i] / o.length;
+    }
+    for (let i = 0; i < o.length; i++) { o[i] -= mean; norm += o[i] * o[i]; }
+    if (norm < 1) return null; // flat: nothing printed there
+    for (let i = 0; i < o.length; i++) o[i] /= Math.sqrt(norm);
+    return o;
+  }));
+  // the single best explanation of the picture (blur, and how far the grid is off at each end) …
+  let best = null;
+  for (const tpl of SOFT_TPL) {
+    const fit = SOFT_PLACES.map((pl, n) => seen[n].map((o) => {
+      if (!o) return null;
+      if (pl.guard !== undefined) return { c: dot(o, tpl.guards[pl.guard]) };
+      let c = -2, k = 0;
+      for (let j = pl.g < 6 ? 0 : 20, end = pl.g < 6 ? 20 : 30; j < end; j++) {
+        const cj = dot(o, tpl.digits[j]);
+        if (cj > c) { c = cj; k = j; }
+      }
+      return { c, k };
+    }));
+    for (let a = 0; a < SOFT_SHIFTS.length; a++) {
+      for (let b = 0; b < SOFT_SHIFTS.length; b++) {
+        const pick = SOFT_PLACES.map((pl, n) => fit[n][Math.round(a + (b - a) * (pl.at + pl.len / 2) / 95)]);
+        if (pick.includes(null)) continue;
+        const total = pick.reduce((s, f) => s + f.c, 0);
+        if (!best || total > best.total) best = { total, pick };
+      }
+    }
+  }
+  if (!best) return null;
+  // … must then be a valid code
+  const { pick } = best, d = pick.slice(0, 12);
+  const first = EAN_FIRST.indexOf(d.slice(0, 6).map((f) => (f.k >= 10 ? 'G' : 'L')).join(''));
+  const digits = first + d.map((f) => f.k % 10).join('');
+  if (first < 0 || !eanValid(digits)) return null;
+  return { digits, score: d.reduce((s, f) => s + f.c, 0) / 12, worst: Math.min(...d.map((f) => f.c)),
+    guard: Math.min(...pick.slice(12).map((f) => f.c)) };
+}
+const softOk = (r) => r.score >= SOFT_MEAN && r.worst >= SOFT_WORST && r.guard >= SOFT_GUARD;
+// finds stretches that look like a code on one line: many edges, with a plain margin on both sides
+function eanSoftLine(v, edges) {
+  const n = edges.length;
+  if (n < 20) return null;
+  const gap = (j) => edges[j + 1].x - edges[j].x, median = (a) => a.sort((p, q) => p - q)[a.length >> 1];
+  const before = (i) => (i > 0 ? gap(i - 1) : edges[i].x), after = (i) => (i < n - 1 ? gap(i) : v.length - edges[i].x);
+  const starts = [], ends = [];
+  for (let i = 0; i < n; i++) {
+    const inner = [];
+    if (edges[i].s < 0 && i + 12 < n) {
+      for (let j = i; j < i + 12; j++) inner.push(gap(j));
+      if (before(i) > 3.5 * median(inner)) starts.push(i);
+    } else if (edges[i].s > 0 && i >= 12) {
+      for (let j = i - 12; j < i; j++) inner.push(gap(j));
+      if (after(i) > 3.5 * median(inner)) ends.push(i);
+    }
+  }
+  let best = null;
+  for (const i of starts) {
+    for (const j of ends) {
+      if (j - i < 19) continue;
+      const x0 = edges[i].x, x1 = edges[j].x, m = (x1 - x0) / 95;
+      let inside = 0;
+      for (let k = i; k < j; k++) inside = Math.max(inside, gap(k));
+      if (m < 1.2 || before(i) < 4 * m || after(j) < 4 * m || inside > 7 * m) continue;
+      for (const dir of [1, -1]) {
+        const r = eanSoft(v, x0, x1, dir);
+        if (r && softOk(r) && (!best || r.score > best.score)) best = r;
+      }
+    }
+  }
+  return best && best.digits;
 }
 // all codes read in a picture, with how many lines read each one
 function readBarcodes(img, lines = 24) {
@@ -2736,7 +2868,7 @@ function readBarcodes(img, lines = 24) {
 // Camera on top, the product found below: check the price, count the stock, put a label on the sheet,
 // or link an unknown code to a product (the item list from the office has no barcodes).
 const scan = { stream: null, timer: 0, paused: true, hits: [], detector: null, code: null, pid: null, dirty: false, torch: false,
-  canvas: document.createElement('canvas') };
+  focus: 'continuous', zoom: 1, view: 1, focusTimer: 0, canvas: document.createElement('canvas') };
 const findByCode = (code) => state.products.find((p) => codesOf(p).includes(code) || (p.sku && normCode(p.sku) === code));
 
 function openScanner() {
@@ -2756,6 +2888,60 @@ function closeScanner() {
 $('#btnScan').onclick = openScanner;
 $('#scanClose').onclick = closeScanner;
 
+// The back camera that can focus. With several back cameras Android may hand out the ultra-wide one, and on many
+// phones that one has a fixed focus: a code held close stays blurred. The main camera is the first one listed
+// ("camera2 0, facing back"). The camera found is remembered.
+const CAM_KEY = 'arcimke.camera', CAM_SIZE = { width: { ideal: 3840 }, height: { ideal: 2160 } };
+const camCaps = (track) => (track && track.getCapabilities ? track.getCapabilities() : {});
+const canFocus = (track) => (camCaps(track).focusMode || []).some((m) => m === 'continuous' || m === 'single-shot');
+async function openBackCamera() {
+  const md = navigator.mediaDevices;
+  const open = (id) => md.getUserMedia({ audio: false,
+    video: id ? { ...CAM_SIZE, deviceId: { exact: id } } : { ...CAM_SIZE, facingMode: { ideal: 'environment' } } });
+  const idOf = (s) => s.getVideoTracks()[0].getSettings().deviceId;
+  const close = (s) => s.getTracks().forEach((tr) => tr.stop());
+  let saved = null;
+  try { saved = localStorage.getItem(CAM_KEY); } catch (e) { /* no storage */ }
+  if (saved) {
+    try { return await open(saved); } catch (e) { /* that camera is gone: choose again */ }
+  }
+  let stream = await open(null); // fails when there is no camera or it isn't allowed
+  if (!canFocus(stream.getVideoTracks()[0])) {
+    const tried = idOf(stream);
+    let cams = [];
+    try {
+      const num = (d) => { const m = /\d+/.exec(d.label); return m ? +m[0] : 99; };
+      cams = (await md.enumerateDevices())
+        .filter((d) => d.kind === 'videoinput' && d.deviceId && /back|rear|environment/i.test(d.label))
+        .sort((a, b) => num(a) - num(b));
+    } catch (e) { /* keep this one */ }
+    if (cams.some((c) => c.deviceId !== tried)) {
+      close(stream); // phones open one camera at a time
+      stream = null;
+      for (const cam of cams) {
+        if (cam.deviceId === tried) continue;
+        try { stream = await open(cam.deviceId); } catch (e) { continue; }
+        if (canFocus(stream.getVideoTracks()[0])) break;
+        close(stream);
+        stream = null;
+      }
+      // none says it can focus: the first one listed
+      if (!stream) stream = await open(cams[0].deviceId).catch(() => open(null));
+    }
+  }
+  try { localStorage.setItem(CAM_KEY, idOf(stream)); } catch (e) { /* not remembered */ }
+  return stream;
+}
+// focus, zoom and light in one go: each change of settings replaces the earlier ones
+function applyCam() {
+  const track = scan.stream && scan.stream.getVideoTracks()[0];
+  if (!track || !track.applyConstraints) return;
+  const caps = camCaps(track), adv = [];
+  if ((caps.focusMode || []).includes(scan.focus)) adv.push({ focusMode: scan.focus });
+  if (caps.zoom && scan.zoom > 1) adv.push({ zoom: scan.zoom });
+  if (caps.torch) adv.push({ torch: scan.torch });
+  if (adv.length) track.applyConstraints({ ...CAM_SIZE, advanced: adv }).catch(() => {});
+}
 async function startCamera() {
   const msg = $('#scanMsg');
   if (scan.stream) { resumeScan(); return; }
@@ -2764,8 +2950,7 @@ async function startCamera() {
   $('#scanAim').hidden = true;
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no camera');
-    scan.stream = await navigator.mediaDevices.getUserMedia({ audio: false,
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
+    scan.stream = await openBackCamera();
   } catch (e) {
     msg.textContent = t('camDenied');
     showManualEntry();
@@ -2777,10 +2962,15 @@ async function startCamera() {
   try { await video.play(); } catch (e) { /* playback without a tap is allowed in the app */ }
   msg.hidden = true;
   $('#scanAim').hidden = false;
-  const track = scan.stream.getVideoTracks()[0];
-  const caps = track && track.getCapabilities ? track.getCapabilities() : {};
+  const caps = camCaps(scan.stream.getVideoTracks()[0]);
   $('#scanTorch').hidden = !caps.torch;
-  if (caps.focusMode && caps.focusMode.includes('continuous')) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+  // Zoomed in, a code fills the square from about 15 cm, where the camera can focus (most can't closer than about
+  // 10 cm). Without a camera zoom the picture is enlarged on screen instead; the 4K picture keeps it sharp enough.
+  scan.zoom = caps.zoom && caps.zoom.max >= 1.5 ? Math.min(2, caps.zoom.max) : 1;
+  scan.view = scan.zoom > 1 ? 1 : 2;
+  video.style.transform = scan.view > 1 ? `scale(${scan.view})` : '';
+  scan.focus = 'continuous';
+  applyCam();
   if (!scan.detector && 'BarcodeDetector' in window) {
     try { // Android's own reader, where the WebView offers it; the page's reader runs either way
       const formats = await window.BarcodeDetector.getSupportedFormats();
@@ -2792,6 +2982,7 @@ async function startCamera() {
 }
 function stopCamera() {
   clearTimeout(scan.timer);
+  clearTimeout(scan.focusTimer);
   scan.paused = true;
   if (scan.stream) scan.stream.getTracks().forEach((tr) => tr.stop());
   scan.stream = null;
@@ -2816,12 +3007,33 @@ document.addEventListener('visibilitychange', () => {
   else if (scan.wasOn) { scan.wasOn = false; startCamera(); }
 });
 $('#scanTorch').onclick = () => {
-  const track = scan.stream && scan.stream.getVideoTracks()[0];
-  if (!track) return;
+  if (!scan.stream) return;
   scan.torch = !scan.torch;
-  track.applyConstraints({ advanced: [{ torch: scan.torch }] }).catch(() => {});
+  applyCam();
   $('#scanTorch').classList.toggle('on', scan.torch);
 };
+// a tap on the picture focuses again, on the middle
+$('#scanCam').addEventListener('click', () => {
+  if (!scan.stream) return;
+  const modes = camCaps(scan.stream.getVideoTracks()[0]).focusMode || [];
+  scan.focus = modes.includes('single-shot') ? 'single-shot' : 'continuous';
+  applyCam();
+  const aim = $('#scanAim');
+  aim.classList.remove('focus');
+  void aim.offsetWidth; // restart the animation
+  aim.classList.add('focus');
+  clearTimeout(scan.focusTimer);
+  scan.focusTimer = setTimeout(() => { if (scan.stream && scan.focus !== 'continuous') { scan.focus = 'continuous'; applyCam(); } }, 3000);
+});
+// a long press shows which camera is in use, and how (for troubleshooting)
+$('#scanCam').addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const track = scan.stream && scan.stream.getVideoTracks()[0];
+  if (!track) return;
+  const st = track.getSettings ? track.getSettings() : {}, caps = camCaps(track);
+  toast([track.label || '?', `${st.width}×${st.height}`, scan.zoom > 1 ? `zoom ${scan.zoom}×` : `view ${scan.view}×`,
+    'focus: ' + ((caps.focusMode || []).join(', ') || '–'), 'zoom: ' + (caps.zoom ? `${caps.zoom.min}–${caps.zoom.max}` : '–')].join(' · '));
+});
 
 // one camera frame: the square in the middle of the screen (a little more than the drawn frame) is read
 async function scanFrame() {
@@ -2831,7 +3043,7 @@ async function scanFrame() {
   if (vw && vh) {
     // on-screen square → camera pixels; the video fills its area like object-fit: cover
     const cam = $('#scanCam').getBoundingClientRect(), aim = $('#scanAim').getBoundingClientRect();
-    const k = Math.max(cam.width / vw, cam.height / vh);
+    const k = Math.max(cam.width / vw, cam.height / vh) * scan.view; // the picture may be enlarged around its middle
     const side = Math.round(Math.min(vw, vh, aim.width / k * 1.25));
     const cx = vw / 2 + (aim.left + aim.width / 2 - cam.left - cam.width / 2) / k;
     const cy = vh / 2 + (aim.top + aim.height / 2 - cam.top - cam.height / 2) / k;
