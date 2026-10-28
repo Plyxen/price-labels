@@ -103,6 +103,8 @@ ul.list{list-style:none;padding:0;margin:0;background:var(--surface);border:1px 
 .price{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:15px}
 .add{width:48px;height:48px;border-radius:12px;border:0;background:var(--accent-soft);color:var(--accent);font-size:26px;font-weight:500;position:relative;flex:none;line-height:1}
 .add:active{filter:brightness(.92)}
+.bc{width:40px;height:48px;border:0;border-radius:12px;background:none;color:var(--muted);display:grid;place-items:center;flex:none}
+.bc:active{background:var(--surface-2)}
 .add .cnt{position:absolute;top:-5px;right:-5px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;padding:0 5px;line-height:20px}
 .add.no{background:var(--surface-2);color:var(--muted);font-size:20px}
 .empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:15px}
@@ -219,6 +221,21 @@ dialog h2{margin:0 0 14px;font-size:19px}
 .sheet-head{display:flex;align-items:center;gap:8px;margin:-6px -8px 10px 0}
 .sheet-head h2{flex:1;margin:0}
 dialog.center{margin:auto;border-radius:22px;max-width:420px;width:calc(100% - 32px)}
+/* a barcode for the register's scanner: black on white whatever the theme, the whole screen */
+dialog.code{max-width:none;width:100%;height:100%;max-height:none;margin:0;border-radius:0;background:#fff;color:#111}
+dialog.code::backdrop{background:#fff}
+.code-view{min-height:100%;display:flex;flex-direction:column;padding:calc(var(--inset-top) + 6px) 16px calc(var(--inset-bottom) + 20px)}
+.code-view .icon-btn{color:#111;align-self:flex-start}
+.code-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-bottom:40px}
+.code-name{font-size:20px;font-weight:750;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
+.code-price{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;margin:4px 0 22px}
+#codeCanvas{display:block}
+.code-digits{font:600 22px/1.2 ui-monospace,Consolas,monospace;letter-spacing:.14em;margin-top:6px}
+.code-pick{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+.code-pick button{height:36px;padding:0 12px;border-radius:18px;border:1.5px solid #ccc;background:#fff;color:#111;font-weight:650;font-variant-numeric:tabular-nums}
+.code-pick button.on{border-color:#111;background:#111;color:#fff}
+.code-hint{color:#555;font-size:14px;line-height:1.4;margin:24px 8px 0;max-width:400px}
+.code-btn{width:100%;height:44px;margin:0 0 12px}
 dialog.center form{padding:22px 20px 16px}
 .dlg-actions{display:flex;gap:10px;align-items:center;margin-top:10px}
 .dlg-actions .grow{flex:1}
@@ -597,6 +614,7 @@ html.kb #toast{bottom:12px}
         <label class="field grow"><span data-i18n="skuLabel"></span><input id="eSku"></label>
         <label class="field grow" style="flex:1.6"><span data-i18n="codesLabel"></span><input id="eCodes" inputmode="numeric" data-i18n-ph="codesPh"></label>
       </div>
+      <button type="button" class="btn code-btn" id="eShowCode" hidden><span class="bc-icon"></span><span data-i18n="showCode"></span></button>
     </div>
     <label class="check" id="eNoOrderRow"><input type="checkbox" id="eNoOrder"><span data-i18n="noOrder"></span></label>
     <div class="split">
@@ -614,6 +632,23 @@ html.kb #toast{bottom:12px}
   </form>
 </dialog>
 <datalist id="catList"></datalist>
+
+<!-- a linked barcode, for the register's scanner -->
+<dialog id="codeDlg" class="code">
+  <div class="code-view">
+    <button type="button" class="icon-btn" id="codeClose" data-i18n-label="close">
+      <svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <div class="code-main">
+      <div class="code-name" id="codeName"></div>
+      <div class="code-price" id="codePrice"></div>
+      <canvas id="codeCanvas"></canvas>
+      <div class="code-digits" id="codeDigits"></div>
+      <div class="code-pick" id="codePick"></div>
+      <p class="code-hint" data-i18n="codeHint"></p>
+    </div>
+  </div>
+</dialog>
 
 <!-- groups checked for "To order", with a reorder level per group -->
 <dialog id="groupsDlg">
@@ -765,6 +800,7 @@ const I18N = {
     scanNewProduct: 'New product with this code', scanNext: 'Scan next', addLabel: 'Add label', unlink: 'Unlink code',
     linked: ({ name }) => `Code linked to ${name}`, unlinked: 'Code unlinked', scanStock: 'In stock', noStockYet: 'no stock recorded',
     manualCode: 'Barcode number', badCode: 'That is not a valid barcode number', fullSetOne: 'Saved as full stock',
+    showCode: 'Show barcode', codeHint: 'Hold the scanner 10–20 cm from the screen. Laser scanners often can’t read phone screens; camera-type scanners can.',
     updKeepsData: 'Your products, labels and settings stay.', updInstall: 'Update', version: ({ v }) => `Version ${v}`,
     updCheck: 'Check for updates', updChecking: 'Checking…', updLatest: 'You have the latest version',
     updLast: ({ when }) => `Last checked: ${when}`, updNever: 'Checked automatically when there is internet', updOffline: 'No internet – check skipped',
@@ -847,6 +883,7 @@ const I18N = {
     scanNewProduct: 'Új termék ezzel a kóddal', scanNext: 'Következő', addLabel: 'Címke', unlink: 'Kód leválasztása',
     linked: ({ name }) => `Kód hozzákapcsolva: ${name}`, unlinked: 'Kód leválasztva', scanStock: 'Készlet', noStockYet: 'nincs készletadat',
     manualCode: 'Vonalkód száma', badCode: 'Ez nem érvényes vonalkód', fullSetOne: 'Teljes készletként mentve',
+    showCode: 'Vonalkód megjelenítése', codeHint: 'Tartsd a leolvasót 10–20 cm-re a kijelzőtől. A lézeres leolvasók a telefon kijelzőjét gyakran nem olvassák, a kamerás leolvasók igen.',
     updKeepsData: 'A termékek, címkék és beállítások megmaradnak.', updInstall: 'Frissítés', version: ({ v }) => `Verzió: ${v}`,
     updCheck: 'Frissítés keresése', updChecking: 'Keresés…', updLatest: 'A legújabb verzió van telepítve',
     updLast: ({ when }) => `Utoljára ellenőrizve: ${when}`, updNever: 'Magától ellenőrzi, ha van internet', updOffline: 'Nincs internet – ellenőrzés kihagyva',
@@ -1547,7 +1584,8 @@ function renderProducts() {
       ${amounts
         ? `<input class="amt" data-f="min" inputmode="decimal" enterkeyhint="next" aria-label="${esc(t('colMin'))}" value="${typeof p.min === 'number' ? fmtQty(p.min) : ''}" placeholder="${inherited === null ? '' : fmtQty(inherited)}">
       <input class="amt" data-f="full" inputmode="decimal" enterkeyhint="next" aria-label="${esc(t('colFull'))}" value="${typeof p.full === 'number' ? fmtQty(p.full) : ''}">`
-        : `<span class="price">${esc(priceText(p))}</span>
+        : `<span class="price">${esc(priceText(p))}</span>${codesOf(p).length
+          ? `<button class="bc" data-act="code" aria-label="${esc(t('showCode'))}">${BC_ICON}</button>` : ''}
       <button class="add" data-act="add" aria-label="+">+${cnt ? `<span class="cnt">${cnt}</span>` : ''}</button>`}
     </li>`;
   }
@@ -1588,6 +1626,7 @@ $('#prodList').addEventListener('click', (e) => {
   const p = state.products.find((x) => x.id === btn.closest('[data-id]').dataset.id);
   if (!p) return;
   if (act === 'edit') { openEditor('product', p); return; }
+  if (act === 'code') { showBarcode(p); return; }
   addToSheet(p, 1, p.id); // a single tap is deliberate, so it works even at 0 stock
   changed();
   toast(isEmpty(p) ? `${t('added')} · ${t('zeroStock')}` : t('added'));
@@ -2476,6 +2515,7 @@ function openEditor(kind, obj, onSaved) {
   E.full.value = typeof obj.full === 'number' ? fmtQty(obj.full) : '';
   E.sku.value = obj.sku || '';
   E.codes.value = codesOf(obj).join(' ');
+  $('#eShowCode').hidden = !parseCodes(E.codes.value).length;
   $('#eProdRow').hidden = $('#eNoOrderRow').hidden = !product;
   $('#eNoOrder').checked = !!obj.noOrder;
   $('#eCopiesWrap').hidden = kind !== 'sheet';
@@ -2486,6 +2526,8 @@ function openEditor(kind, obj, onSaved) {
 }
 ['input', 'change'].forEach((ev) => $('#editForm').addEventListener(ev, () => drawSingle($('#editPreview'), editItem())));
 $('#eCancel').onclick = () => $('#editDlg').close();
+E.codes.addEventListener('input', () => { $('#eShowCode').hidden = !parseCodes(E.codes.value).length; });
+$('#eShowCode').onclick = () => showBarcode({ name: E.name.value.trim(), price: parsePrice(E.price.value), unit: E.unit.value }, parseCodes(E.codes.value));
 $('#editForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const fields = editItem();
@@ -3035,6 +3077,68 @@ $('#scanCam').addEventListener('contextmenu', (e) => {
     'focus: ' + ((caps.focusMode || []).join(', ') || '–'), 'zoom: ' + (caps.zoom ? `${caps.zoom.min}–${caps.zoom.max}` : '–')].join(' · '));
 });
 
+// ---------- barcode for the register's scanner ----------
+// A linked code drawn black on white in whole screen pixels (every bar exactly so many pixels wide), with the
+// screen at full brightness, so the shop's own scanner can read it off the phone.
+const BC_ICON = '<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M3 5h1.6v14H3zM6 5h2.8v14H6zM10.2 5h1.2v14h-1.2zM12.8 5h2.4v14h-2.4zM16.6 5h1.2v14h-1.2zM19.2 5h1.8v14h-1.8z"/></svg>';
+$('#eShowCode .bc-icon').outerHTML = BC_ICON;
+function eanBits(code) { // 1 = bar, one per module, margins not included
+  const d = [...code].map(Number), long = code.length === 13, bits = [];
+  const put = (w, bar) => w.forEach((len, i) => { for (let j = 0; j < len; j++) bits.push((i % 2 === 0) === bar ? 1 : 0); });
+  const guard = (g) => [...g].forEach((c) => bits.push(+c));
+  guard('101');
+  (long ? d.slice(1, 7) : d.slice(0, 4)).forEach((n, i) => {
+    const q = EAN_DIGITS[n];
+    put(long && EAN_FIRST[d[0]][i] === 'G' ? [q[3], q[2], q[1], q[0]] : q, false);
+  });
+  guard('01010');
+  (long ? d.slice(7) : d.slice(4)).forEach((n) => put(EAN_DIGITS[n], true));
+  guard('101');
+  return bits;
+}
+function drawEan(canvas, code) {
+  const bits = eanBits(code), n = bits.length, quiet = code.length === 13 ? [11, 9] : [8, 8], total = n + quiet[0] + quiet[1];
+  const dpr = window.devicePixelRatio || 1, room = Math.min(canvas.parentElement.clientWidth, 560) * dpr;
+  const mod = Math.max(2, Math.floor(room / total)), w = total * mod, h = Math.round(w * 0.4), gh = h + 5 * mod;
+  canvas.width = w;
+  canvas.height = gh;
+  canvas.style.width = `${w / dpr}px`;
+  canvas.style.height = `${gh / dpr}px`;
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, w, gh);
+  g.fillStyle = '#000';
+  bits.forEach((b, i) => {
+    const guard = i < 3 || i >= n - 3 || Math.abs(i - (n - 1) / 2) <= 2; // the guard bars reach lower
+    if (b) g.fillRect((quiet[0] + i) * mod, 0, mod, guard ? gh : h);
+  });
+}
+const fmtEan = (c) => (c.length === 13 ? `${c[0]} ${c.slice(1, 7)} ${c.slice(7)}` : `${c.slice(0, 4)} ${c.slice(4)}`);
+let codeShown = null;
+function showCodeOf(code) {
+  codeShown = code;
+  drawEan($('#codeCanvas'), code);
+  $('#codeDigits').textContent = fmtEan(code);
+  $$('#codePick button').forEach((b) => b.classList.toggle('on', b.dataset.code === code));
+}
+function showBarcode(p, codes = codesOf(p)) {
+  codes = codes.filter((c) => /^(\d{8}|\d{13})$/.test(c) && eanValid(c));
+  if (!codes.length) return;
+  $('#codeName').textContent = p.name || '';
+  $('#codePrice').textContent = priceText(p);
+  $('#codePick').innerHTML = codes.length > 1 ? codes.map((c) => `<button type="button" data-code="${c}">${fmtEan(c)}</button>`).join('') : '';
+  $$('#codePick button').forEach((b) => { b.onclick = () => showCodeOf(b.dataset.code); });
+  $('#codeDlg').showModal();
+  showCodeOf(codes[0]); // once shown: the size follows the screen
+  if (window.Android && window.Android.brightScreen) window.Android.brightScreen(true);
+}
+$('#codeClose').onclick = () => $('#codeDlg').close();
+$('#codeDlg').addEventListener('close', () => {
+  codeShown = null;
+  if (window.Android && window.Android.brightScreen) window.Android.brightScreen(false);
+});
+window.addEventListener('resize', () => { if (codeShown) showCodeOf(codeShown); });
+
 // one camera frame: the square in the middle of the screen (a little more than the drawn frame) is read
 async function scanFrame() {
   const video = $('#scanVideo');
@@ -3343,7 +3447,7 @@ window.addEventListener('online', () => checkUpdate(false));
 
 // ---------- Android back button ----------
 window.onAndroidBack = () => {
-  const open = $('dialog[open]');
+  const open = [...$$('dialog[open]')].pop(); // the one on top
   if (open) { open.close(); return true; }
   if (!$('#prodMenu').hidden) { closeMenu(); return true; }
   if (!$('#scanView').hidden) { closeScanner(); return true; }
