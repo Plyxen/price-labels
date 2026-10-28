@@ -12,8 +12,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 /**
- * Read-only provider that lets email / Bluetooth / Drive apps read shared PDF, CSV and backup files from cache/share/,
- * and the package installer read a downloaded update.
+ * Lets email / Bluetooth / Drive apps read shared PDF, CSV and backup files from cache/share/, the package installer
+ * read a downloaded update, and the camera app write the photo of a barcode (the one file that can be written).
  */
 public class ShareProvider extends ContentProvider {
     @Override
@@ -32,7 +32,11 @@ public class ShareProvider extends ContentProvider {
 
     @Override
     public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
-        return ParcelFileDescriptor.open(fileFor(uri), ParcelFileDescriptor.MODE_READ_ONLY);
+        File f = fileFor(uri);
+        if (mode.contains("w") && MainActivity.PHOTO_NAME.equals(f.getName())) {
+            return ParcelFileDescriptor.open(f, ParcelFileDescriptor.parseMode(mode));
+        }
+        return ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
     }
 
     @Override
@@ -61,6 +65,7 @@ public class ShareProvider extends ContentProvider {
         if (name.endsWith(".txt")) return "text/plain";
         if (name.endsWith(".json")) return "application/json";
         if (name.endsWith(".apk")) return MainActivity.APK_MIME;
+        if (name.endsWith(".jpg")) return "image/jpeg";
         return "application/pdf";
     }
 

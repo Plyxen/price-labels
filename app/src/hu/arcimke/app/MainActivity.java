@@ -11,6 +11,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -68,6 +70,10 @@ public class MainActivity extends Activity {
     private static final String DOWNLOAD_FOLDER = "Arcimke";
     private static final int REQ_PICK_FILE = 41;
     private static final int REQ_CAMERA = 42;
+    private static final int REQ_PHOTO = 43;
+    /** the camera app's photo of a barcode, in cache/share/ (the only file the provider lets another app write) */
+    static final String PHOTO_NAME = "barcode-photo.jpg";
+    private static final int PHOTO_MAX = 3000; // px on the long side handed to the page
     private static final int MAX_IMPORT_BYTES = 25 * 1024 * 1024;
     private static final int MAX_UPDATE_BYTES = 50 * 1024 * 1024;
 
@@ -81,6 +87,8 @@ public class MainActivity extends Activity {
     // a file opened with / shared to the app, waiting for the page to pick it up
     private volatile String pendingName;
     private volatile byte[] pendingData;
+    // the camera app's photo, ready for the page to read the barcode from (base64 JPEG)
+    private volatile String pendingPhoto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -194,6 +202,21 @@ public class MainActivity extends Activity {
             fileCallback = null;
             return;
         }
+        if (requestCode == REQ_PHOTO) {
+            if (resultCode != RESULT_OK) {
+                js("window.onPhoto&&window.onPhoto(false)");
+                return;
+            }
+            new Thread(() -> {
+                try {
+                    pendingPhoto = photoForPage(new File(new File(getCacheDir(), SHARE_DIR), PHOTO_NAME));
+                    js("window.onPhoto&&window.onPhoto(true)");
+                } catch (IOException | RuntimeException | OutOfMemoryError e) {
+                    js("window.onPhoto&&window.onPhoto(false)");
+                }
+            }).start();
+            return;
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -206,6 +229,25 @@ public class MainActivity extends Activity {
             pendingCamera.deny();
         }
         pendingCamera = null;
+    }
+
+    /** The camera app's photo, at most PHOTO_MAX px on its long side, as base64 JPEG. */
+    private static String photoForPage(File f) throws IOException {
+        BitmapFactory.Options size = new BitmapFactory.Options();
+        size.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(f.getPath(), size);
+        if (size.outWidth <= 0) throw new IOException("no photo");
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inSampleSize = 1;
+        while (Math.max(size.outWidth, size.outHeight) / (o.inSampleSize * 2) >= PHOTO_MAX) o.inSampleSize *= 2;
+        Bitmap b = BitmapFactory.decodeFile(f.getPath(), o);
+        if (b == null) throw new IOException("no photo");
+        float k = Math.min(1f, (float) PHOTO_MAX / Math.max(b.getWidth(), b.getHeight()));
+        if (k < 1f) b = Bitmap.createScaledBitmap(b, Math.round(b.getWidth() * k), Math.round(b.getHeight() * k), true);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        b.compress(Bitmap.CompressFormat.JPEG, 92, out);
+        f.delete();
+        return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
     }
 
     /** Runs a line of JavaScript in the page (from any thread). */
@@ -498,6 +540,40 @@ public class MainActivity extends Activity {
         public void allowInstall() {
             runOnUiThread(() -> startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                     Uri.parse("package:" + getPackageName()))));
+        }
+
+        /**
+         * Opens the phone's own camera app for a photo of a barcode: full resolution and the camera app's focus,
+         * for codes the live picture is too soft to read. The result comes back through window.onPhoto(ok).
+         */
+        @JavascriptInterface
+        public void takePhoto() {
+            runOnUiThread(() -> {
+                try {
+                    File dir = new File(getCacheDir(), SHARE_DIR);
+                    if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("no cache");
+                    File f = new File(dir, PHOTO_NAME);
+                    if (f.exists() && !f.delete()) throw new IOException("old photo");
+                    if (!f.createNewFile()) throw new IOException("no photo file"); // the provider only serves existing files
+                    Uri uri = new Uri.Builder().scheme("content").authority(AUTHORITY).appendPath(PHOTO_NAME).build();
+                    Intent cam = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    cam.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+                    cam.setClipData(ClipData.newRawUri("", uri));
+                    cam.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivityForResult(cam, REQ_PHOTO);
+                } catch (IOException | RuntimeException e) { // no camera app, or the camera not allowed
+                    toast(e.getMessage());
+                    js("window.onPhoto&&window.onPhoto(false)");
+                }
+            });
+        }
+
+        /** The photo taken with takePhoto(), as base64 JPEG ("" when there is none). Read once. */
+        @JavascriptInterface
+        public String takePhotoData() {
+            String data = pendingPhoto;
+            pendingPhoto = null;
+            return data == null ? "" : data;
         }
 
         /** Full brightness and the screen kept on while a barcode is shown for the register's scanner. */
