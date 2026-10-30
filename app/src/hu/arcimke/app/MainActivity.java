@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
         density = getResources().getDisplayMetrics().density;
         boolean night = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
-        int bg = night ? Color.rgb(11, 15, 23) : Color.rgb(243, 245, 248);
+        int bg = night ? Color.rgb(18, 18, 17) : Color.rgb(242, 240, 235);
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(bg);

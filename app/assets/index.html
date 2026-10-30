@@ -6,22 +6,20 @@
 <meta name="color-scheme" content="light dark">
 <title>Árcímke</title>
 <style>
+/* A shop tool: paper, ink, and one signal yellow for the scanner. Hairlines instead of cards and shadows. */
 :root{
   --inset-top: env(safe-area-inset-top, 0px);
   --inset-bottom: env(safe-area-inset-bottom, 0px);
-  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#eef1f5; --text:#111827; --muted:#667085; --line:#e2e6ec;
-  --accent:#1f5eff; --accent-press:#1a4fd6; --accent-soft:#e7eeff;
-  --danger:#d32f2f; --danger-soft:#fdecec; --warn:#a15c00; --warn-soft:#fff3dc; --ok:#15803d; --ok-soft:#e5f6ea;
-  --shadow:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.07);
-  --shadow-lg:0 6px 20px rgba(16,24,40,.20);
-  --radius:16px;
+  --bg:#f2f0eb; --surface:#ffffff; --surface-2:#ebe8e1; --text:#171612; --muted:#6f6a60; --line:#e0dcd3; --line-2:#c8c3b7;
+  --ink:#171612; --on-ink:#ffffff; --accent:#ffcf00; --on-accent:#171612; --accent-soft:#fff3b8;
+  --danger:#c42d1c; --danger-soft:#fbe8e4; --warn:#975800; --warn-soft:#f8ecd2; --ok:#2b7a3b; --ok-soft:#e3f1e3;
+  --radius:6px; --mono:ui-monospace,"Roboto Mono","Cascadia Mono",Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#0b0f17; --surface:#151b26; --surface-2:#1c2431; --text:#e8ecf2; --muted:#9aa4b2; --line:#283244;
-    --accent:#5c8bff; --accent-press:#4a78ea; --accent-soft:#1b2944;
-    --danger:#ff6b6b; --danger-soft:#3a1a1c; --warn:#f5b942; --warn-soft:#352a12; --ok:#4ade80; --ok-soft:#12301d;
-    --shadow:none; --shadow-lg:0 6px 20px rgba(0,0,0,.55);
+    --bg:#121211; --surface:#1c1b19; --surface-2:#282724; --text:#ece9e2; --muted:#a29d92; --line:#2f2d2a; --line-2:#4a4741;
+    --ink:#ece9e2; --on-ink:#121211; --accent:#ffcf00; --on-accent:#121211; --accent-soft:#3b3313;
+    --danger:#ff7b67; --danger-soft:#3b1d18; --warn:#efb04a; --warn-soft:#352810; --ok:#6fc77d; --ok-soft:#173019;
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -29,101 +27,103 @@ html,body{margin:0;height:100%}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);
   display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;font-size:16px;line-height:1.35}
 button{font:inherit;color:inherit;cursor:pointer}
-svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-svg.i.sm{width:20px;height:20px}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i.sm{width:18px;height:18px}
 [hidden]{display:none !important}
 
-/* top app bar: title and the current tab's actions */
-header.top{background:var(--bg);padding:calc(var(--inset-top) + 6px) 4px 4px 20px;display:flex;align-items:center;gap:2px;flex:none}
-header.top h1{font-size:22px;margin:0;flex:1;min-width:0;font-weight:750;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:48px}
-.icon-btn{width:48px;height:48px;border:0;border-radius:24px;background:none;display:grid;place-items:center;color:var(--text);flex:none;position:relative}
+/* top bar: title and the current tab's actions */
+header.top{background:var(--bg);padding:calc(var(--inset-top) + 4px) 4px 2px 16px;display:flex;align-items:center;gap:0;flex:none}
+header.top h1{font-size:21px;margin:0;flex:1;min-width:0;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:48px}
+.icon-btn{width:46px;height:46px;border:0;border-radius:var(--radius);background:none;display:grid;place-items:center;color:var(--text);flex:none;position:relative}
 .icon-btn:active{background:var(--surface-2)}
-.icon-btn.on{background:var(--accent-soft);color:var(--accent)}
+.icon-btn.on{background:var(--accent);color:var(--on-accent)}
 
 main{flex:1;overflow-y:auto;overscroll-behavior:contain}
-.tab{display:none;padding:4px 16px 32px;max-width:640px;margin:0 auto}
+.tab{display:none;padding:0 16px 32px;max-width:640px;margin:0 auto}
 .tab.active{display:block}
 
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
 .field{display:block;margin-bottom:12px}
-.field>span{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.field>span{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;font-weight:650}
 input[type=text],input[type=search],input[type=email],input:not([type]),select{
-  width:100%;height:50px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;font-size:17px;
-  background:var(--surface-2);color:var(--text);outline:none;font-family:inherit;-webkit-appearance:none;appearance:none}
+  width:100%;height:48px;border:1.5px solid var(--line-2);border-radius:var(--radius);padding:0 12px;font-size:17px;
+  background:var(--surface);color:var(--text);outline:none;font-family:inherit;-webkit-appearance:none;appearance:none}
+input::placeholder{color:var(--muted);opacity:.8}
 select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
-  background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
-input:focus,select:focus{border-color:var(--accent);background-color:var(--surface)}
+  background-position:calc(100% - 19px) 21px,calc(100% - 14px) 21px;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+input:focus,select:focus{border-color:var(--text)}
 .price-wrap{position:relative}
-.price-wrap::after{content:"Ft";position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:700;pointer-events:none}
-.price-wrap input{padding-right:44px;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.price-wrap::after{content:"Ft";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:700;pointer-events:none}
+.price-wrap input{padding-right:42px;font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
 .row{display:flex;gap:10px;align-items:flex-end}
 .row>.grow{flex:1;min-width:0}
-.row>.unit{width:118px;flex:none}
+.row>.unit{width:112px;flex:none}
 .check{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px}
-.check input{width:22px;height:22px;margin:0;accent-color:var(--accent);flex:none}
+.check input{width:22px;height:22px;margin:0;accent-color:var(--ink);flex:none}
 .split{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;flex-wrap:wrap}
 .copies{display:flex;align-items:center;gap:10px;font-size:15px}
 
-.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface-2);flex:none}
-.stepper button{width:44px;height:44px;border:0;background:none;font-size:22px;line-height:1}
-.stepper button:active{background:var(--line)}
-.stepper .n{min-width:30px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line-2);border-radius:var(--radius);overflow:hidden;background:var(--surface);flex:none}
+.stepper button{width:42px;height:42px;border:0;background:none;font-size:22px;line-height:1}
+.stepper button:active{background:var(--surface-2)}
+.stepper .n{min-width:30px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
 
-.primary{width:100%;height:54px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:17px;font-weight:700;
+.primary{width:100%;height:50px;border:0;border-radius:var(--radius);background:var(--ink);color:var(--on-ink);font-size:16.5px;font-weight:750;
   display:flex;align-items:center;justify-content:center;gap:8px}
-.primary:active{background:var(--accent-press)}
-.primary:disabled{opacity:.45}
+.primary:active{opacity:.85}
+.primary:disabled{opacity:.35}
 
-.label-preview{width:100%;aspect-ratio:70/30;display:block;border-radius:4px;background:#fff;margin:0 0 14px;
-  box-shadow:0 0 0 1px var(--line),0 3px 10px rgba(0,0,0,.08)}
+.label-preview{width:100%;aspect-ratio:70/30;display:block;border-radius:2px;background:#fff;margin:0 0 14px;box-shadow:0 0 0 1px var(--line-2)}
 
-.suggest{margin:-6px 0 12px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
-.suggest button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border:0;
+.suggest{margin:-6px 0 12px;border:1.5px solid var(--line-2);border-top:0;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;background:var(--surface)}
+.suggest button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:0;
   border-top:1px solid var(--line);background:none;text-align:left}
 .suggest button:first-child{border-top:0}
 .suggest button:active{background:var(--surface-2)}
 .suggest small{color:var(--muted)}
 .suggest b{white-space:nowrap;font-variant-numeric:tabular-nums}
 
-.list-head{display:flex;align-items:center;gap:6px;margin:18px 4px 6px;min-height:44px}
-.list-head h2{font-size:13px;margin:0;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.list-head{display:flex;align-items:center;gap:6px;margin:16px 0 6px;min-height:40px}
+.list-head h2{font-size:15px;margin:0;font-weight:800}
 .list-head .muted{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .muted{color:var(--muted);font-size:14px}
-.text-btn{border:0;background:none;color:var(--accent);font-weight:700;font-size:15px;padding:10px 8px;min-height:44px;border-radius:10px;white-space:nowrap;flex:none}
-.text-btn:active{background:var(--accent-soft)}
-.text-btn.danger{color:var(--danger)}
+.text-btn{border:0;background:none;color:var(--text);font-weight:700;font-size:14.5px;padding:10px 8px;min-height:44px;border-radius:var(--radius);white-space:nowrap;flex:none;
+  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px;text-decoration-color:var(--line-2)}
+.text-btn:active{background:var(--surface-2)}
+.text-btn.danger{color:var(--danger);text-decoration-color:currentColor}
 
-ul.list{list-style:none;padding:0;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-.item{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 2px;border-top:1px solid var(--line);min-height:66px}
+/* lists run edge to edge, rows split by hairlines */
+ul.list{list-style:none;padding:0;margin:0 -16px;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.item{display:flex;align-items:center;gap:6px;padding:4px 12px 4px 4px;border-top:1px solid var(--line);min-height:64px}
 .item:first-child{border-top:0}
-.item-main{flex:1;min-width:0;text-align:left;background:none;border:0;padding:10px 10px;border-radius:10px}
+.item-main{flex:1;min-width:0;text-align:left;background:none;border:0;padding:10px 8px 10px 12px;border-radius:var(--radius)}
 .item-main:active{background:var(--surface-2)}
 .nm{display:block;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub{display:block;font-size:13.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.price{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:15px}
-.add{width:48px;height:48px;border-radius:12px;border:0;background:var(--accent-soft);color:var(--accent);font-size:26px;font-weight:500;position:relative;flex:none;line-height:1}
-.add:active{filter:brightness(.92)}
-.bc{width:40px;height:48px;border:0;border-radius:12px;background:none;color:var(--muted);display:grid;place-items:center;flex:none}
+.price{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;font-size:16px}
+.add{width:44px;height:44px;border-radius:var(--radius);border:1.5px solid var(--line-2);background:var(--surface);color:var(--text);font-size:24px;font-weight:400;position:relative;flex:none;line-height:1}
+.add:active{background:var(--surface-2)}
+.bc{width:38px;height:44px;border:0;border-radius:var(--radius);background:none;color:var(--muted);display:grid;place-items:center;flex:none}
 .bc:active{background:var(--surface-2)}
-.add .cnt{position:absolute;top:-5px;right:-5px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;padding:0 5px;line-height:20px}
-.add.no{background:var(--surface-2);color:var(--muted);font-size:20px}
+.add .cnt{position:absolute;top:-7px;right:-7px;background:var(--ink);color:var(--on-ink);font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:3px;padding:0 5px;line-height:20px}
+.add.no{border-color:transparent;background:none;color:var(--muted);font-size:18px}
 .empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:15px}
 .empty b{display:block;color:var(--text);font-size:17px;margin-bottom:6px}
 .empty small{display:block;margin-top:8px;font-size:13.5px}
 .empty-acts{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px}
 .empty-acts .btn{height:48px;width:100%;max-width:280px}
-.group{padding:12px 14px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);
+.group{padding:16px 16px 6px;font-size:14px;font-weight:800;color:var(--text);background:var(--bg);
   border-top:1px solid var(--line);display:flex;align-items:center;gap:8px}
 .group:first-child{border-top:0}
 .group .gname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.group.amts{padding-right:10px;gap:6px}
-.group .colh{width:58px;text-align:center;flex:none;font-size:11px}
-.gbtn{flex:none;height:30px;padding:0 12px;border-radius:15px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;letter-spacing:0;text-transform:none}
+.group.amts{padding-right:12px;gap:6px}
+.group .colh{width:58px;text-align:center;flex:none;font-size:12px;font-weight:650;color:var(--muted)}
+.gbtn{flex:none;height:30px;padding:0 10px;border-radius:4px;border:1.5px solid var(--line-2);background:var(--surface);color:var(--text);font-size:12.5px;font-weight:700}
+.gbtn:active{background:var(--surface-2)}
 .item input.amt{width:58px;height:42px;padding:0 4px;text-align:center;font-size:16px;flex:none}
-.hidden-note{padding:14px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.hidden-note .gbtn{color:var(--text)}
+.hidden-note{padding:14px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .more{padding:12px;text-align:center;border-top:1px solid var(--line)}
-.sec{padding:14px 14px 6px;font-size:15px;font-weight:800;border-top:1px solid var(--line)}
+.sec{padding:14px 16px 4px;font-size:15px;font-weight:800;border-top:1px solid var(--line)}
 .sec:first-child{border-top:0}
 .sec.order,.stk.order{color:var(--danger)}
 .sec.low{color:var(--warn)}
@@ -131,142 +131,156 @@ ul.list{list-style:none;padding:0;margin:0;background:var(--surface);border:1px 
 .stk.low{color:var(--warn)}
 .stk.out{color:var(--danger)}
 
-/* search + group chips stay at the top while the list scrolls */
+/* search and the group tabs stay at the top while the list scrolls */
 .search-bar{position:sticky;top:0;z-index:2;background:var(--bg);margin:0 -16px;padding:4px 16px 0}
 .search{position:relative}
-.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-.search input{padding-left:46px;border-radius:25px;background:var(--surface);border-color:var(--line)}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 8px;scrollbar-width:none}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search input{padding-left:40px}
+.chips{display:flex;overflow-x:auto;margin:6px -16px 0;padding:0 8px;border-bottom:1px solid var(--line);scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;height:36px;padding:0 15px;border-radius:18px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:14px}
-.chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip{flex:none;height:44px;padding:0 10px;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:none;color:var(--muted);font-weight:650;font-size:14.5px}
+.chip.active{color:var(--text);border-bottom-color:var(--text);font-weight:800}
 /* the count keeps room for itself; the buttons move to a second line on narrow phones */
-#tab-products .list-head{flex-wrap:wrap;justify-content:flex-end;row-gap:0;margin-top:2px}
+#tab-products .list-head{flex-wrap:wrap;justify-content:flex-end;row-gap:0;margin-top:4px}
 #prodCount{flex:1 1 auto;min-width:100px}
-.amt-hint{margin:6px 4px 10px;font-size:13.5px;color:var(--muted);background:var(--accent-soft);border-radius:12px;padding:10px 12px}
+.amt-hint{margin:10px 0;font-size:13.5px;color:var(--text);background:var(--accent-soft);border-radius:var(--radius);padding:10px 12px}
 
-/* order tab */
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.stat{border-radius:14px;padding:12px 14px;background:var(--surface-2)}
-.stat b{display:block;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+/* order tab: two big numbers, then the button */
+.stats{display:grid;grid-template-columns:1fr 1fr;margin:-2px 0 14px}
+.stat{padding:0 0 2px}
+.stat+.stat{border-left:1px solid var(--line);padding-left:14px}
+.stat b{display:block;font-size:34px;line-height:1.1;font-weight:850;font-variant-numeric:tabular-nums}
 .stat span{font-size:13.5px;font-weight:650;color:var(--muted)}
-.stat.order{background:var(--danger-soft)} .stat.order b{color:var(--danger)}
-.stat.low{background:var(--warn-soft)} .stat.low b{color:var(--warn)}
+.stat.order b{color:var(--danger)}
+.stat.low b{color:var(--warn)}
 .card-foot{display:flex;align-items:center;justify-content:center;gap:4px;margin:8px -6px -8px;flex-wrap:wrap}
 
 /* labels tab */
-.sum-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 2px 12px}
-.sum-line b{font-size:18px}
-.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sum-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.sum-line b{font-size:18px;font-weight:800}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .actions .primary{grid-column:1/-1}
-.act{height:62px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);font-weight:650;font-size:13.5px;
+.act{height:58px;border-radius:var(--radius);border:1.5px solid var(--line-2);background:var(--surface);font-weight:700;font-size:13.5px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .act:active{background:var(--surface-2)}
-.act:disabled{opacity:.45}
+.act:disabled{opacity:.35}
 .pages{display:grid;gap:18px}
 figure.page{margin:0}
-figure.page canvas{width:100%;display:block;background:#fff;border-radius:2px;box-shadow:0 0 0 1px var(--line),0 4px 14px rgba(0,0,0,.10)}
+figure.page canvas{width:100%;display:block;background:#fff;border-radius:1px;box-shadow:0 0 0 1px var(--line-2)}
 figcaption{text-align:center;font-size:13px;color:var(--muted);margin-top:6px}
-.hint{font-size:13.5px;color:var(--muted);margin:16px 4px 0}
+.hint{font-size:13.5px;color:var(--muted);margin:16px 0 0}
 
 /* more tab */
-.sec-title{font-size:13px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 6px 8px}
+.sec-title{font-size:15px;font-weight:800;margin:22px 0 8px}
 .sec-title:first-child{margin-top:8px}
-.menu-card{padding:4px 0;overflow:hidden}
-.row-btn{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:10px 14px 10px 16px;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.menu-card{padding:0;overflow:hidden}
+.row-btn{display:flex;align-items:center;gap:14px;width:100%;min-height:62px;padding:10px 14px;border:0;border-top:1px solid var(--line);background:none;text-align:left}
 .menu-card>.row-btn:first-child,.menu-card>.db-sum+.row-btn{border-top:0}
 .row-btn:not(.static):active{background:var(--surface-2)}
-.row-btn .ri{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
-.row-btn .ri.warm{background:var(--ok-soft);color:var(--ok)}
+.row-btn .ri{width:24px;display:grid;place-items:center;color:var(--muted);flex:none}
 .row-btn .rt{flex:1;min-width:0}
-.row-btn .rt b{display:block;font-weight:650}
+.row-btn .rt b{display:block;font-weight:700}
 .row-btn .rt small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px}
-.row-btn .chev{color:var(--muted)}
-.menu-card .pad{padding:8px 16px 4px;border-top:1px solid var(--line)}
-.db-sum{margin:0;padding:12px 16px 14px;font-size:14px;color:var(--muted);line-height:1.5;border-bottom:1px solid var(--line)}
+.menu-card .pad{padding:8px 14px 4px;border-top:1px solid var(--line)}
+.db-sum{margin:0;padding:12px 14px 14px;font-size:14px;color:var(--muted);line-height:1.5;border-bottom:1px solid var(--line)}
 .db-sum b{color:var(--text)}
-.banner{display:flex;align-items:center;gap:12px;background:var(--accent-soft);border-radius:var(--radius);padding:12px 12px 12px 16px;margin:8px 0 4px}
+.banner{display:flex;align-items:center;gap:12px;background:var(--accent);color:var(--on-accent);border-radius:var(--radius);padding:12px 12px 12px 14px;margin:8px 0 4px}
 .banner .grow{flex:1;min-width:0}
 .banner b{display:block}
-.banner small{display:block;color:var(--muted);font-size:13.5px}
-.banner .btn.primary{height:44px;padding:0 18px}
+.banner small{display:block;font-size:13.5px;opacity:.8}
+.banner .btn.primary{height:44px;padding:0 18px;background:#171612;color:#fff}
 
-/* bottom navigation, with the scanner in the middle */
+/* bottom navigation, the scanner in the middle */
 nav.bottom{flex:none;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:var(--inset-bottom)}
-nav.bottom button{flex:1;min-width:0;height:68px;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:650;position:relative;padding:0}
-nav.bottom .pill{width:56px;height:30px;border-radius:15px;display:grid;place-items:center;transition:background-color .15s}
-nav.bottom button.active{color:var(--text)}
-nav.bottom button.active .pill{background:var(--accent-soft);color:var(--accent)}
-nav.bottom .scan-c{width:58px;height:46px;border-radius:16px;background:var(--accent);color:#fff;display:grid;place-items:center;box-shadow:0 3px 10px rgba(31,94,255,.35)}
-nav.bottom .scan-btn{color:var(--text);gap:2px}
-nav.bottom .scan-btn:active .scan-c{background:var(--accent-press)}
-nav.bottom .badge{position:absolute;top:6px;left:calc(50% + 8px);background:var(--accent);color:#fff;font-size:11px;font-weight:700;min-width:19px;height:19px;border-radius:10px;padding:0 5px;line-height:19px}
-nav.bottom .badge.warn{background:var(--danger)}
-nav.bottom .dot{position:absolute;top:8px;left:calc(50% + 14px);width:10px;height:10px;border-radius:5px;background:var(--danger);border:2px solid var(--surface)}
+nav.bottom button{flex:1;min-width:0;height:64px;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;font-size:12px;font-weight:650;position:relative;padding:0 0 9px}
+nav.bottom .pill{height:26px;display:grid;place-items:center}
+nav.bottom button.active{color:var(--text);font-weight:800}
+nav.bottom button.active::before{content:"";position:absolute;top:-1px;left:22%;right:22%;height:3px;background:var(--text)}
+nav.bottom .scan-c{width:56px;height:38px;border-radius:var(--radius);background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
+nav.bottom .scan-btn{color:var(--text);gap:2px;font-weight:800}
+nav.bottom .scan-btn:active .scan-c{filter:brightness(.92)}
+nav.bottom .badge{position:absolute;top:7px;left:calc(50% + 7px);background:var(--ink);color:var(--on-ink);font-size:11px;font-weight:800;min-width:19px;height:19px;border-radius:3px;padding:0 5px;line-height:19px}
+nav.bottom .badge.warn{background:var(--danger);color:#fff}
+nav.bottom .dot{position:absolute;top:9px;left:calc(50% + 12px);width:9px;height:9px;border-radius:5px;background:var(--danger);border:2px solid var(--surface)}
 html.kb nav.bottom{display:none}
 
-/* overflow menu of the app bar */
-.menu{position:fixed;top:calc(var(--inset-top) + 52px);right:8px;z-index:12;min-width:230px;max-width:calc(100% - 16px);background:var(--surface);border-radius:14px;
-  box-shadow:var(--shadow-lg);border:1px solid var(--line);padding:6px 0}
-.menu button{display:flex;align-items:center;gap:14px;width:100%;min-height:50px;padding:0 18px;border:0;background:none;text-align:left;font-size:15.5px}
+/* overflow menu of the top bar */
+.menu{position:fixed;top:calc(var(--inset-top) + 50px);right:8px;z-index:12;min-width:230px;max-width:calc(100% - 16px);background:var(--surface);border-radius:var(--radius);
+  box-shadow:0 8px 24px rgba(0,0,0,.18);border:1px solid var(--line-2);padding:4px 0}
+.menu button{display:flex;align-items:center;gap:14px;width:100%;min-height:50px;padding:0 16px;border:0;background:none;text-align:left;font-size:15.5px}
 .menu button:active{background:var(--surface-2)}
 .menu svg{color:var(--muted)}
 .menu-scrim{position:fixed;inset:0;z-index:11}
 
-dialog{border:0;padding:0;width:100%;max-width:560px;margin:auto auto 0;border-radius:22px 22px 0 0;background:var(--surface);color:var(--text);
+dialog{border:0;padding:0;width:100%;max-width:560px;margin:auto auto 0;border-radius:12px 12px 0 0;background:var(--surface);color:var(--text);
   max-height:92vh;max-height:92dvh;overflow-y:auto}
-dialog::backdrop{background:rgba(0,0,0,.45)}
-dialog form{padding:20px 18px calc(16px + var(--inset-bottom))}
-dialog h2{margin:0 0 14px;font-size:19px}
-.sheet-head{display:flex;align-items:center;gap:8px;margin:-6px -8px 10px 0}
+dialog::backdrop{background:rgba(10,10,8,.5)}
+dialog form{padding:18px 16px calc(16px + var(--inset-bottom))}
+dialog h2{margin:0 0 14px;font-size:19px;font-weight:800}
+.sheet-head{display:flex;align-items:center;gap:8px;margin:-6px -6px 10px 0}
 .sheet-head h2{flex:1;margin:0}
-dialog.center{margin:auto;border-radius:22px;max-width:420px;width:calc(100% - 32px)}
+dialog.center{margin:auto;border-radius:10px;max-width:420px;width:calc(100% - 32px)}
+dialog.center form{padding:20px 18px 14px}
 /* a barcode for the register's scanner: black on white whatever the theme, the whole screen */
-dialog.code{max-width:none;width:100%;height:100%;max-height:none;margin:0;border-radius:0;background:#fff;color:#111}
+dialog.code{max-width:none;width:100%;height:100%;max-height:none;margin:0;border-radius:0;background:#fff;color:#171612}
 dialog.code::backdrop{background:#fff}
-.code-view{min-height:100%;display:flex;flex-direction:column;padding:calc(var(--inset-top) + 6px) 16px calc(var(--inset-bottom) + 20px)}
-.code-view .icon-btn{color:#111;align-self:flex-start}
-.code-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-bottom:40px}
-.code-name{font-size:20px;font-weight:750;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
-.code-price{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;margin:4px 0 22px}
+.code-view{min-height:100%;display:flex;flex-direction:column;padding:calc(var(--inset-top) + 4px) 16px calc(var(--inset-bottom) + 12px)}
+.code-view .icon-btn{color:#171612;align-self:flex-start}
+.code-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-bottom:24px}
+.code-name{font-size:20px;font-weight:800;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
+.code-price{font-size:30px;font-weight:850;font-variant-numeric:tabular-nums;margin:2px 0 22px}
 #codeCanvas{display:block}
-.code-digits{font:600 22px/1.2 ui-monospace,Consolas,monospace;letter-spacing:.14em;margin-top:6px}
-.code-pick{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
-.code-pick button{height:36px;padding:0 12px;border-radius:18px;border:1.5px solid #ccc;background:#fff;color:#111;font-weight:650;font-variant-numeric:tabular-nums}
-.code-pick button.on{border-color:#111;background:#111;color:#fff}
-.code-hint{color:#555;font-size:14px;line-height:1.4;margin:24px 8px 0;max-width:400px}
-.code-btn{width:100%;height:44px;margin:0 0 12px}
-dialog.center form{padding:22px 20px 16px}
+.code-digits{font:600 22px/1.2 var(--mono);letter-spacing:.12em;margin-top:6px;overflow-wrap:anywhere}
+.code-count{margin:20px 0 0;font-size:14px;color:#6f6a60}
+.code-count:empty{display:none}
+.code-pick{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+.code-pick button{height:36px;padding:0 10px;border-radius:4px;border:1.5px solid #c8c3b7;background:#fff;color:#171612;font:600 14px var(--mono)}
+.code-pick button.on{border-color:#171612;background:#171612;color:#fff}
+.code-hint{color:#6f6a60;font-size:14px;line-height:1.4;margin:22px 8px 0;max-width:400px}
+.code-remove{align-self:center;border:0;background:none;color:#c42d1c;font-weight:700;font-size:15px;min-height:48px;padding:0 16px;
+  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px}
 .dlg-actions{display:flex;gap:10px;align-items:center;margin-top:10px}
 .dlg-actions .grow{flex:1}
-.btn{height:50px;padding:0 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn{height:48px;padding:0 16px;border-radius:var(--radius);border:1.5px solid var(--line-2);background:var(--surface);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .btn:active{background:var(--surface-2)}
-.btn.primary{width:auto;border:0;padding:0 24px;height:50px;background:var(--accent);color:#fff}
-.btn.primary:active{background:var(--accent-press)}
+.btn.primary{width:auto;border:0;padding:0 22px;height:48px;background:var(--ink);color:var(--on-ink)}
+.btn.primary:active{opacity:.85}
 .small{font-size:12.5px}
-.added-note{margin:10px 2px 0;color:var(--ok);font-weight:650;font-size:14.5px;min-height:20px}
+.added-note{margin:10px 0 0;color:var(--ok);font-weight:700;font-size:14.5px;min-height:20px}
 
-.seg{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;gap:4px;margin:0 0 8px}
+/* a product's barcodes in the editor: tap one to show it, × to remove it */
+.code-list{list-style:none;margin:0 0 8px;padding:0;border:1.5px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
+.code-list li{display:flex;align-items:center;border-top:1px solid var(--line)}
+.code-list li:first-child{border-top:0}
+.code-row{flex:1;min-width:0;display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border:0;background:none;text-align:left;font:600 16px var(--mono)}
+.code-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.code-row svg{color:var(--muted)}
+.code-row:active{background:var(--surface-2)}
+.code-list .icon-btn{color:var(--muted)}
+.code-add{display:flex;gap:8px}
+.code-add input{flex:1;min-width:0;font-family:var(--mono)}
+
+.seg{display:flex;background:var(--surface-2);border-radius:var(--radius);padding:3px;gap:3px;margin:0 0 8px}
 .seg label{flex:1;position:relative;min-width:0}
 .seg input{position:absolute;opacity:0;pointer-events:none}
-.seg span{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:10px;font-weight:700;font-size:14.5px;color:var(--muted);text-align:center;padding:4px 8px;line-height:1.2}
-.seg input:checked+span{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.mode-hint{font-size:13.5px;color:var(--muted);margin:0 2px 12px}
-details.adv{border:1px solid var(--line);border-radius:12px;margin:8px 0;padding:0 12px}
-details.adv summary{min-height:48px;display:flex;align-items:center;font-weight:650;font-size:15px;cursor:pointer;list-style:none}
+.seg span{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:4px;font-weight:700;font-size:14.5px;color:var(--muted);text-align:center;padding:4px 8px;line-height:1.2}
+.seg input:checked+span{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line-2)}
+.mode-hint{font-size:13.5px;color:var(--muted);margin:0 0 12px}
+details.adv{border:1px solid var(--line-2);border-radius:var(--radius);margin:8px 0;padding:0 12px}
+details.adv summary{min-height:48px;display:flex;align-items:center;font-weight:700;font-size:15px;cursor:pointer;list-style:none}
 details.adv summary::-webkit-details-marker{display:none}
 details.adv summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-4px 4px 0 auto;transition:transform .15s}
 details.adv[open] summary::after{transform:rotate(-135deg);margin-top:4px}
 details.adv[open]{padding-bottom:6px}
 .imp-file{margin:-6px 0 14px;font-size:14px;color:var(--muted);word-break:break-all}
-.imp-prev{list-style:none;margin:4px 0 8px;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.imp-prev{list-style:none;margin:4px 0 8px;padding:0;border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
 .imp-prev li{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-top:1px solid var(--line);font-size:14px}
 .imp-prev li:first-child{border-top:0}
 .imp-prev span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .imp-prev b{white-space:nowrap;font-variant-numeric:tabular-nums}
-.imp-sum{font-weight:650;margin:6px 2px 4px}
-.glist-head{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--muted);margin:14px 12px 4px}
-.glist{list-style:none;margin:0 0 8px;padding:0;border:1px solid var(--line);border-radius:12px}
+.imp-sum{font-weight:700;margin:6px 0 4px}
+.glist-head{display:flex;justify-content:space-between;font-size:12.5px;font-weight:650;color:var(--muted);margin:14px 12px 4px}
+.glist{list-style:none;margin:0 0 8px;padding:0;border:1px solid var(--line-2);border-radius:var(--radius)}
 .glist li{display:flex;align-items:center;gap:10px;padding:2px 8px 2px 12px;border-top:1px solid var(--line)}
 .glist li:first-child{border-top:0}
 .glist .check{flex:1;min-width:0}
@@ -279,36 +293,49 @@ details.adv[open]{padding-bottom:6px}
 #scanView header.top{padding-left:4px}
 .scan-cam{flex:1;position:relative;overflow:hidden;background:#000;min-height:150px}
 .scan-cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.scan-aim{position:absolute;left:50%;top:50%;width:min(68vw,300px,70%);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:20px;
-  box-shadow:0 0 0 100vmax rgba(0,0,0,.42);border:3px solid rgba(255,255,255,.92);transition:border-color .15s}
-.scan-aim.hit{border-color:#4ade80}
+/* the square to aim with: four corner marks, the rest of the picture dimmed */
+.scan-aim{--c:#fff;position:absolute;left:50%;top:50%;width:min(68vw,300px,70%);aspect-ratio:1;transform:translate(-50%,-50%);
+  box-shadow:0 0 0 100vmax rgba(0,0,0,.45);
+  background:linear-gradient(var(--c),var(--c)) 0 0/34px 4px,linear-gradient(var(--c),var(--c)) 0 0/4px 34px,
+    linear-gradient(var(--c),var(--c)) 100% 0/34px 4px,linear-gradient(var(--c),var(--c)) 100% 0/4px 34px,
+    linear-gradient(var(--c),var(--c)) 0 100%/34px 4px,linear-gradient(var(--c),var(--c)) 0 100%/4px 34px,
+    linear-gradient(var(--c),var(--c)) 100% 100%/34px 4px,linear-gradient(var(--c),var(--c)) 100% 100%/4px 34px;
+  background-repeat:no-repeat}
+.scan-aim.hit{--c:var(--accent)}
 .scan-aim.focus{animation:aimFocus .45s ease-out}
 @keyframes aimFocus{40%{transform:translate(-50%,-50%) scale(.93)}}
 .scan-aim.small{width:min(52vw,220px,60%)}
-.scan-tip{position:absolute;left:16px;right:16px;bottom:76px;text-align:center;color:#fff;font-size:14px;font-weight:600;text-shadow:0 1px 3px #000;margin:0}
-.scan-photo{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);height:50px;padding:0 22px;border-radius:25px;border:0;
-  background:rgba(255,255,255,.95);color:#111;font-weight:750;font-size:15.5px;display:flex;align-items:center;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.35);white-space:nowrap}
-.scan-photo.nudge{background:var(--accent);color:#fff;animation:photoNudge 1.1s ease-in-out 2}
+.scan-tip{position:absolute;left:16px;right:16px;bottom:76px;text-align:center;color:#fff;font-size:14px;font-weight:650;text-shadow:0 1px 3px #000;margin:0}
+.scan-photo{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);height:48px;padding:0 20px;border-radius:var(--radius);border:0;
+  background:#fff;color:#171612;font-weight:800;font-size:15.5px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.scan-photo.nudge{background:var(--accent);color:var(--on-accent);animation:photoNudge 1.1s ease-in-out 2}
 @keyframes photoNudge{50%{transform:translateX(-50%) scale(1.08)}}
 .scan-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#fff;font-size:15px;background:#111}
-.scan-sheet{background:var(--surface);border-radius:22px 22px 0 0;margin-top:-20px;position:relative;padding:16px 16px calc(14px + var(--inset-bottom));
-  max-height:66%;overflow-y:auto;box-shadow:0 -4px 16px rgba(0,0,0,.18)}
+.scan-sheet{background:var(--surface);border-radius:12px 12px 0 0;margin-top:-12px;position:relative;padding:16px 16px calc(14px + var(--inset-bottom));
+  max-height:66%;overflow-y:auto;border-top:1px solid var(--line)}
 .scan-sheet:empty{display:none}
 .sc-head{display:flex;gap:12px;align-items:flex-start}
 .sc-head .grow{flex:1;min-width:0}
-.sc-name{font-size:19px;font-weight:750;margin:0;line-height:1.25}
+.sc-name{font-size:19px;font-weight:800;margin:0;line-height:1.25}
 .sc-sub{color:var(--muted);font-size:13.5px;margin-top:3px}
-.sc-price{font-size:26px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
-.sc-code{display:inline-block;font-size:12.5px;font-weight:700;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:3px 8px;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.sc-price{font-size:27px;font-weight:850;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sc-codes{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.sc-code{display:inline-block;font:600 12.5px var(--mono);color:var(--muted);border:1px solid var(--line-2);border-radius:3px;padding:3px 6px}
+.sc-code.on{color:var(--on-ink);background:var(--ink);border-color:var(--ink)}
+.sc-addcode{border:0;background:none;color:var(--text);font-weight:700;font-size:13.5px;padding:6px 4px;
+  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:var(--line-2)}
+.sc-linkbar{display:flex;align-items:center;gap:12px;font-size:14.5px}
+.sc-linkbar .grow{flex:1;min-width:0}
+.sc-linknote{margin:0 0 12px;font-size:14.5px}
 .sc-stock{display:flex;align-items:center;gap:12px;margin:14px 0 4px;flex-wrap:wrap}
-.sc-stock .lbl{font-weight:650;font-size:14px;color:var(--muted);flex:1;min-width:90px}
+.sc-stock .lbl{font-weight:700;font-size:14px;color:var(--muted);flex:1;min-width:90px}
 .sc-stock .stepper button{width:52px;height:52px;font-size:26px}
-.sc-stock input{width:76px;height:52px;border:0;border-left:1.5px solid var(--line);border-right:1.5px solid var(--line);border-radius:0;text-align:center;font-weight:800;font-size:20px;padding:0 4px;background:var(--surface)}
+.sc-stock input{width:76px;height:52px;border:0;border-left:1.5px solid var(--line-2);border-right:1.5px solid var(--line-2);border-radius:0;text-align:center;font-weight:800;font-size:20px;padding:0 4px;background:var(--surface)}
 .sc-state{font-size:13.5px;margin:2px 0 0}
 .sc-acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.sc-acts .btn{flex:1 1 0;min-width:0;height:48px;padding:0 10px;font-size:14.5px}
+.sc-acts .btn{flex:1 1 0;min-width:0;height:46px;padding:0 8px;font-size:14.5px;line-height:1.15}
 .sc-next{margin-top:10px}
-.sc-results{list-style:none;margin:8px 0 0;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sc-results{list-style:none;margin:8px 0 0;padding:0;border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden}
 .sc-results li{border-top:1px solid var(--line)}
 .sc-results li:first-child{border-top:0}
 .sc-results button{display:flex;width:100%;align-items:center;gap:10px;padding:11px 12px;border:0;background:none;text-align:left}
@@ -317,17 +344,17 @@ details.adv[open]{padding-bottom:6px}
 .sc-results small{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* typing (stock, search, code): the camera makes room for the keyboard */
 html.kb #scanView .scan-cam{display:none}
-html.kb .scan-sheet{flex:1;max-height:none;margin-top:0;border-radius:0;box-shadow:none}
+html.kb .scan-sheet{flex:1;max-height:none;margin-top:0;border-radius:0}
 
-#toast{position:fixed;inset:auto 16px calc(var(--inset-bottom) + 84px) 16px;max-width:528px;margin:0 auto;background:#1f2937;color:#fff;border:0;
-  border-radius:14px;padding:12px 8px 12px 16px;min-height:52px;display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(16px);
-  pointer-events:none;transition:opacity .18s,transform .18s;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.25);width:auto;height:auto;overflow:visible}
+#toast{position:fixed;inset:auto 16px calc(var(--inset-bottom) + 80px) 16px;max-width:528px;margin:0 auto;background:#262522;color:#fff;border:0;
+  border-radius:var(--radius);padding:12px 8px 12px 14px;min-height:50px;display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(12px);
+  pointer-events:none;transition:opacity .18s,transform .18s;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.25);width:auto;height:auto;overflow:visible}
 html.kb #toast{bottom:12px}
 #toast.show{opacity:1;transform:none;pointer-events:auto}
-#toast button{margin-left:auto;background:none;border:0;color:#9db8ff;font-weight:800;font-size:14px;letter-spacing:.04em;text-transform:uppercase;padding:8px 10px;flex:none}
-#busy{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:30}
-#busy .box{background:var(--surface);border-radius:18px;padding:22px 26px;display:flex;align-items:center;gap:14px;font-weight:650}
-.spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite}
+#toast button{margin-left:auto;background:none;border:0;color:#ffcf00;font-weight:800;font-size:14.5px;padding:8px 10px;flex:none}
+#busy{position:fixed;inset:0;background:rgba(10,10,8,.45);display:grid;place-items:center;z-index:30}
+#busy .box{background:var(--surface);border-radius:var(--radius);padding:20px 24px;display:flex;align-items:center;gap:14px;font-weight:700}
+.spinner{width:24px;height:24px;border-radius:50%;border:3px solid var(--line-2);border-top-color:var(--text);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -617,11 +644,12 @@ html.kb #toast{bottom:12px}
         <label class="field grow"><span data-i18n="minLabel"></span><input id="eMin" inputmode="decimal"></label>
         <label class="field grow"><span data-i18n="fullLabel"></span><input id="eFull" inputmode="decimal"></label>
       </div>
-      <div class="row">
-        <label class="field grow"><span data-i18n="skuLabel"></span><input id="eSku"></label>
-        <label class="field grow" style="flex:1.6"><span data-i18n="codesLabel"></span><input id="eCodes" inputmode="numeric" data-i18n-ph="codesPh"></label>
+      <label class="field"><span data-i18n="skuLabel"></span><input id="eSku"></label>
+      <div class="field"><span data-i18n="codesLabel"></span>
+        <ul class="code-list" id="eCodeList"></ul>
+        <div class="code-add"><input id="eCodeNew" inputmode="numeric" enterkeyhint="done" autocomplete="off" data-i18n-ph="codeAddPh">
+          <button type="button" class="btn" id="eCodeAdd" data-i18n="add"></button></div>
       </div>
-      <button type="button" class="btn code-btn" id="eShowCode" hidden><span class="bc-icon"></span><span data-i18n="showCode"></span></button>
     </div>
     <label class="check" id="eNoOrderRow"><input type="checkbox" id="eNoOrder"><span data-i18n="noOrder"></span></label>
     <div class="split">
@@ -651,9 +679,11 @@ html.kb #toast{bottom:12px}
       <div class="code-price" id="codePrice"></div>
       <canvas id="codeCanvas"></canvas>
       <div class="code-digits" id="codeDigits"></div>
+      <p class="code-count" id="codeCount"></p>
       <div class="code-pick" id="codePick"></div>
       <p class="code-hint" data-i18n="codeHint"></p>
     </div>
+    <button type="button" class="code-remove" id="codeRemove" data-i18n="codeRemoveBtn"></button>
   </div>
 </dialog>
 
@@ -800,7 +830,9 @@ const I18N = {
     modeDailyHint: 'Prices and stock are updated from the file. Order levels and full stock stay as they are.',
     modeDeliveryHint: 'Like the daily update, and every product whose stock went up gets the new stock saved as its full stock, so the order list knows how many to get next time.',
     impColumns: 'Columns', impOptions: 'More options',
-    skuLabel: 'Item number', codesLabel: 'Barcodes', codesPh: 'scan or type',
+    skuLabel: 'Item number', codesLabel: 'Barcodes', codeAddPh: 'Type a barcode', add: 'Add', removeCode: 'Remove barcode',
+    anotherCode: 'Another barcode', linkingTo: 'Scan the other barcode of ', codeTaken: ({ name }) => `That code belongs to ${name}`,
+    codeRemoved: 'Barcode removed', codeCount: ({ n }) => `${n} barcodes for this product`, codeRemoveBtn: 'Remove this barcode',
     scanTitle: 'Scan barcode', scanTip: 'Hold the barcode in the square, about 15 cm away. Tap to focus.', torch: 'Light', typeCode: 'Type the code',
     camStarting: 'Starting the camera…', camDenied: 'The camera is not available. Allow it in the phone’s settings, or type the code.',
     scanUnknown: 'Unknown barcode', scanLinkHint: 'Find the product and tap it to link this code to it:', scanSearch: 'Search product',
@@ -808,7 +840,7 @@ const I18N = {
     linked: ({ name }) => `Code linked to ${name}`, unlinked: 'Code unlinked', scanStock: 'In stock', noStockYet: 'no stock recorded',
     manualCode: 'Barcode number', badCode: 'That is not a valid barcode number', fullSetOne: 'Saved as full stock',
     takePhoto: 'Take a photo', scanTipPhoto: 'Can’t read it? Take a photo instead.',
-    photoNoCode: 'No barcode found in the photo. Take it a bit closer, with the code in the middle.',
+    photoNoCode: 'No barcode found in the photo. Hold the phone 15–20 cm away so the code is sharp, with the code in the middle.',
     showCode: 'Show barcode', codeHint: 'Hold the scanner 10–20 cm from the screen. Laser scanners often can’t read phone screens; camera-type scanners can.',
     updKeepsData: 'Your products, labels and settings stay.', updInstall: 'Update', version: ({ v }) => `Version ${v}`,
     updCheck: 'Check for updates', updChecking: 'Checking…', updLatest: 'You have the latest version',
@@ -885,7 +917,9 @@ const I18N = {
     modeDailyHint: 'Az árak és a készlet frissülnek a fájlból. A rendelési szintek és a teljes készlet maradnak.',
     modeDeliveryHint: 'Mint a napi frissítés, és minden terméknél, aminek nőtt a készlete, az új készlet lesz a teljes, így a rendelési lista legközelebb tudja, mennyit kell hozni.',
     impColumns: 'Oszlopok', impOptions: 'További beállítások',
-    skuLabel: 'Cikkszám', codesLabel: 'Vonalkódok', codesPh: 'beolvasás vagy beírás',
+    skuLabel: 'Cikkszám', codesLabel: 'Vonalkódok', codeAddPh: 'Vonalkód beírása', add: 'Hozzáad', removeCode: 'Vonalkód törlése',
+    anotherCode: 'Másik vonalkód', linkingTo: 'Olvasd be a másik vonalkódját: ', codeTaken: ({ name }) => `Ez a kód már ehhez tartozik: ${name}`,
+    codeRemoved: 'Vonalkód törölve', codeCount: ({ n }) => `${n} vonalkód tartozik a termékhez`, codeRemoveBtn: 'Vonalkód törlése',
     scanTitle: 'Vonalkód beolvasása', scanTip: 'Tartsd a vonalkódot a négyzetben, kb. 15 cm-re. Élesítéshez koppints.', torch: 'Lámpa', typeCode: 'Kód beírása',
     camStarting: 'Kamera indítása…', camDenied: 'A kamera nem érhető el. Engedélyezd a telefon beállításaiban, vagy írd be a kódot.',
     scanUnknown: 'Ismeretlen vonalkód', scanLinkHint: 'Keresd meg a terméket, és koppints rá, hogy ehhez a kódhoz kapcsold:', scanSearch: 'Termék keresése',
@@ -893,7 +927,7 @@ const I18N = {
     linked: ({ name }) => `Kód hozzákapcsolva: ${name}`, unlinked: 'Kód leválasztva', scanStock: 'Készlet', noStockYet: 'nincs készletadat',
     manualCode: 'Vonalkód száma', badCode: 'Ez nem érvényes vonalkód', fullSetOne: 'Teljes készletként mentve',
     takePhoto: 'Fotó készítése', scanTipPhoto: 'Nem olvassa? Készíts inkább fotót.',
-    photoNoCode: 'A fotón nem található vonalkód. Fotózd kicsit közelebbről, a kóddal középen.',
+    photoNoCode: 'A fotón nem található vonalkód. Tartsd a telefont 15–20 cm-re, hogy éles legyen, a kóddal középen.',
     showCode: 'Vonalkód megjelenítése', codeHint: 'Tartsd a leolvasót 10–20 cm-re a kijelzőtől. A lézeres leolvasók a telefon kijelzőjét gyakran nem olvassák, a kamerás leolvasók igen.',
     updKeepsData: 'A termékek, címkék és beállítások megmaradnak.', updInstall: 'Frissítés', version: ({ v }) => `Verzió: ${v}`,
     updCheck: 'Frissítés keresése', updChecking: 'Keresés…', updLatest: 'A legújabb verzió van telepítve',
@@ -1491,6 +1525,9 @@ const hasStock = (p) => typeof p.stock === 'number';
 const isEmpty = (p) => hasStock(p) && p.stock <= 0;
 // barcodes linked to the product, as EAN-13 / EAN-8 digits
 const codesOf = (p) => p.codes || [];
+// a product can have several codes (old and new packaging, a box and a single piece …), each kept once
+const hasCode = (p, code) => codesOf(p).some((c) => codeKey(c) === codeKey(code));
+const withCodes = (p, add) => add.reduce((out, c) => (out.some((x) => codeKey(x) === codeKey(c)) ? out : [...out, c]), codesOf(p).slice());
 // whole groups (magazines, vouchers…) and single discontinued products can be kept out of the order list
 const orderHidden = (p) => !!p.noOrder || (state.settings.noOrderCats || []).includes(p.cat || '');
 // order amount: the product's own, else its group's, else the default from settings; null = not watched
@@ -1637,7 +1674,7 @@ $('#prodList').addEventListener('click', (e) => {
   const p = state.products.find((x) => x.id === btn.closest('[data-id]').dataset.id);
   if (!p) return;
   if (act === 'edit') { openEditor('product', p); return; }
-  if (act === 'code') { showBarcode(p); return; }
+  if (act === 'code') { showProductCodes(p); return; }
   addToSheet(p, 1, p.id); // a single tap is deliberate, so it works even at 0 stock
   changed();
   toast(isEmpty(p) ? `${t('added')} · ${t('zeroStock')}` : t('added'));
@@ -2346,7 +2383,8 @@ const nameKey = (n) => norm(String(n).replace(DRS_IN_NAME, '').replace(/\s+/g, '
 // till items that never sit on a shelf (OfficeLine "Cikktípus"): e-vignettes, commissions, fuel, deposits, pump AdBlue
 const NON_SHELF = /elektronikus|jutalek|uzemanyag|gongyoleg|adalek/;
 // barcodes in a cell or field ("5999861370986", "5999861370986 4006381333931"); only real EAN/UPC numbers are kept
-const parseCodes = (s) => [...new Set(String(s ?? '').split(/[\s,;/]+/).map(normCode).filter((c) => (c.length === 13 || c.length === 8) && eanValid(c)))];
+// codes in an imported cell: EANs, and other codes of at least 4 characters
+const parseCodes = (s) => [...new Set(String(s ?? '').split(/[\s,;]+/).map(normCode).filter((c) => isEan(c) || (c.length >= 4 && validCode(c))))];
 
 function runImport(apply) {
   const cfg = importConfig();
@@ -2355,7 +2393,7 @@ function runImport(apply) {
   const index = (p) => {
     if (p.sku) bySku.set(norm(p.sku), p);
     if (!byName.has(nameKey(p.name))) byName.set(nameKey(p.name), p);
-    codesOf(p).forEach((c) => byCode.set(c, p));
+    codesOf(p).forEach((c) => byCode.set(codeKey(c), p));
   };
   products.forEach(index);
   const cell = (r, i) => (i >= 0 ? String(r[i] ?? '').trim() : '');
@@ -2381,7 +2419,7 @@ function runImport(apply) {
     if (cfg.drs >= 0) extra.drs = /^(1|i|igen|y|yes|true|x)$/i.test(cell(r, cfg.drs));
     else if (DRS_IN_NAME.test(name) && name.replace(DRS_IN_NAME, '')) { name = name.replace(DRS_IN_NAME, ''); extra.drs = true; }
     if (preview.length < 5) preview.push({ name, price, drs: !!extra.drs });
-    let p = (sku && bySku.get(norm(sku))) || codes.map((c) => byCode.get(c)).find(Boolean) || byName.get(nameKey(name));
+    let p = (sku && bySku.get(norm(sku))) || codes.map((c) => byCode.get(codeKey(c))).find(Boolean) || byName.get(nameKey(name));
     if (p && sku && p.sku && norm(p.sku) !== norm(sku)) p = null; // same name, different item number: a separate product
     if (p) seen.add(p);
     if (p) {
@@ -2397,7 +2435,7 @@ function runImport(apply) {
         p.price = price;
         if (sku && !p.sku) p.sku = sku;
         if (cat) p.cat = cat; // the office's item group wins
-        if (codes.length) p.codes = [...new Set([...codesOf(p), ...codes])]; // codes linked in the app stay
+        if (codes.length) p.codes = withCodes(p, codes); // codes linked in the app stay
         Object.assign(p, extra);
       }
     } else if (cfg.onlyUpdate) skip++;
@@ -2503,8 +2541,8 @@ function exportProducts() {
 
 // ---------- edit dialog ----------
 const E = { name: $('#eName'), price: $('#ePrice'), unit: $('#eUnit'), detail: $('#eDetail'), drs: $('#eDrs'), cat: $('#eCat'), stock: $('#eStock'),
-  min: $('#eMin'), full: $('#eFull'), sku: $('#eSku'), codes: $('#eCodes') };
-let editing = null, editCopies = 1;
+  min: $('#eMin'), full: $('#eFull'), sku: $('#eSku') };
+let editing = null, editCopies = 1, editCodes = [];
 const editItem = () => ({ name: E.name.value.trim(), detail: E.detail.value.trim(), price: parsePrice(E.price.value), unit: E.unit.value, drs: E.drs.checked });
 function setEditCopies(n) { editCopies = Math.max(1, Math.min(999, n)); $('#eCopies').textContent = editCopies; }
 $('#eInc').onclick = () => setEditCopies(editCopies + 1);
@@ -2525,8 +2563,9 @@ function openEditor(kind, obj, onSaved) {
   E.min.placeholder = inherited === null ? '' : `${fmtQty(inherited)} (${t('byDefault')})`;
   E.full.value = typeof obj.full === 'number' ? fmtQty(obj.full) : '';
   E.sku.value = obj.sku || '';
-  E.codes.value = codesOf(obj).join(' ');
-  $('#eShowCode').hidden = !parseCodes(E.codes.value).length;
+  editCodes = codesOf(obj).slice();
+  $('#eCodeNew').value = '';
+  renderEditCodes();
   $('#eProdRow').hidden = $('#eNoOrderRow').hidden = !product;
   $('#eNoOrder').checked = !!obj.noOrder;
   $('#eCopiesWrap').hidden = kind !== 'sheet';
@@ -2537,8 +2576,36 @@ function openEditor(kind, obj, onSaved) {
 }
 ['input', 'change'].forEach((ev) => $('#editForm').addEventListener(ev, () => drawSingle($('#editPreview'), editItem())));
 $('#eCancel').onclick = () => $('#editDlg').close();
-E.codes.addEventListener('input', () => { $('#eShowCode').hidden = !parseCodes(E.codes.value).length; });
-$('#eShowCode').onclick = () => showBarcode({ name: E.name.value.trim(), price: parsePrice(E.price.value), unit: E.unit.value }, parseCodes(E.codes.value));
+// the product's barcodes: tap one to show it for the register, × to take it off, or type another one
+const X_ICON = '<svg class="i sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+function renderEditCodes() {
+  $('#eCodeList').innerHTML = editCodes.map((c, i) => `<li><button type="button" class="code-row" data-show="${i}">${BC_ICON}<span>${esc(fmtCode(c))}</span></button>
+    <button type="button" class="icon-btn" data-del="${i}" aria-label="${esc(t('removeCode'))}">${X_ICON}</button></li>`).join('');
+  $('#eCodeList').hidden = !editCodes.length;
+}
+// the typed code, if it is one; quiet: on Save, where a half-typed code is simply not kept
+function addEditCode(quiet) {
+  const raw = $('#eCodeNew').value.trim(), c = normCode(raw);
+  if (!raw) return;
+  const other = validCode(c) && findByCode(c);
+  if (!validCode(c) || (other && other.id !== editing.id)) {
+    if (!quiet) toast(other ? t('codeTaken', { name: other.name }) : t('badCode'));
+    return;
+  }
+  editCodes = withCodes({ codes: editCodes }, [c]);
+  $('#eCodeNew').value = '';
+  renderEditCodes();
+}
+$('#eCodeAdd').onclick = () => addEditCode(false);
+$('#eCodeNew').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addEditCode(false); } });
+$('#eCodeList').addEventListener('click', (e) => {
+  const del = e.target.closest('[data-del]'), show = e.target.closest('[data-show]');
+  if (del) { editCodes.splice(+del.dataset.del, 1); renderEditCodes(); return; }
+  if (!show) return;
+  const first = editCodes[+show.dataset.show];
+  showBarcode({ name: E.name.value.trim(), price: parsePrice(E.price.value), unit: E.unit.value },
+    [first, ...editCodes.filter((c) => c !== first)], (c) => { editCodes = editCodes.filter((x) => x !== c); renderEditCodes(); });
+});
 $('#editForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const fields = editItem();
@@ -2560,8 +2627,8 @@ $('#editForm').addEventListener('submit', (e) => {
       if (full === null) delete p.full; else p.full = full;
       const sku = E.sku.value.trim();
       if (sku) p.sku = sku; else delete p.sku;
-      const codes = parseCodes(E.codes.value);
-      if (codes.length) p.codes = codes; else delete p.codes;
+      addEditCode(true);
+      if (editCodes.length) p.codes = editCodes.slice(); else delete p.codes;
       if (editing.kind === 'new') state.products.push(p);
       // labels already on the sheet follow the product's new name/price
       state.sheet.filter((x) => x.pid === p.id).forEach((x) => Object.assign(x, fields));
@@ -2656,8 +2723,18 @@ function eanValid(code) {
   const sum = d.reverse().reduce((a, x, i) => a + x * (i % 2 ? 1 : 3), 0);
   return (10 - (sum % 10)) % 10 === check;
 }
-// 12 digits is a UPC-A code: the same product as the EAN-13 with a leading 0
-const normCode = (s) => { const d = String(s || '').replace(/\D/g, ''); return d.length === 12 ? '0' + d : d; };
+const isEan = (c) => /^(\d{8}|\d{13})$/.test(c) && eanValid(c);
+// a code as kept: EAN digits (12 digits is a UPC-A code: the same product as the EAN-13 with a leading 0), or any
+// other code (Code 128, Code 39, a typed item number) as it was read
+const normCode = (s) => {
+  const t = String(s ?? '').trim().replace(/\s+/g, ' '), d = t.replace(/[\s-]/g, '');
+  if (/^\d{12}$/.test(d) && eanValid('0' + d)) return '0' + d;
+  return isEan(d) ? d : t;
+};
+// a valid EAN, or another code of 3–40 plain characters (an 8, 12 or 13 digit number has to be a valid EAN)
+const validCode = (c) => isEan(c) || (!/^(\d{8}|\d{12,13})$/.test(c.replace(/[\s-]/g, '')) && /^[\x20-\x7e]{3,40}$/.test(c));
+// codes match without spaces, dashes or case: 08823-80004 is the 0882380004 in the barcode
+const codeKey = (s) => String(s ?? '').toUpperCase().replace(/[\s-]/g, '');
 
 // one digit from 4 bar/space widths. Matched on bar+space pairs ("edge to similar edge"), which blur and ink
 // spread hardly change; the total bar width tells 1 from 7 and 2 from 8. G = the mirrored set of the left half.
@@ -2709,16 +2786,24 @@ function lineRuns(px) {
   const n = px.length, v = new Float32Array(n);
   for (let i = 0; i < n; i++) v[i] = (px[Math.max(0, i - 1)] + 2 * px[i] + px[Math.min(n - 1, i + 1)]) / 4;
   // local contrast: darkest to brightest within about a tenth of the line
-  const B = Math.max(8, Math.round(n / 24)), nb = Math.ceil(n / B), lo = new Float32Array(nb), hi = new Float32Array(nb), range = new Float32Array(nb);
+  const B = Math.max(8, Math.round(n / 24)), nb = Math.ceil(n / B), lo = new Float32Array(nb), hi = new Float32Array(nb);
   for (let b = 0; b < nb; b++) {
     let a = 255, z = 0;
     for (let i = b * B; i < Math.min(n, b * B + B); i++) { if (v[i] < a) a = v[i]; if (v[i] > z) z = v[i]; }
     lo[b] = a; hi[b] = z;
   }
-  for (let b = 0; b < nb; b++) {
-    range[b] = Math.max(hi[Math.max(0, b - 1)], hi[b], hi[Math.min(nb - 1, b + 1)])
-      - Math.min(lo[Math.max(0, b - 1)], lo[b], lo[Math.min(nb - 1, b + 1)]);
-  }
+  const near = (w) => { // contrast within w blocks either way
+    const out = new Float32Array(nb);
+    for (let b = 0; b < nb; b++) {
+      let a = 255, z = 0;
+      for (let c = Math.max(0, b - w); c <= Math.min(nb - 1, b + w); c++) { if (lo[c] < a) a = lo[c]; if (hi[c] > z) z = hi[c]; }
+      out[b] = z - a;
+    }
+    return out;
+  };
+  // faint stretches are judged against a wider stretch: next to a code, specks and noise in the plain margin are
+  // measured against the code's contrast, so they merge and the margin stays one stretch
+  const range = near(1), wide = near(2);
   const g = new Float32Array(n);
   for (let i = 1; i < n - 1; i++) g[i] = v[i + 1] - v[i - 1];
   const edges = []; // { x, s: +1 dark→light / −1 light→dark, m: strength }
@@ -2744,8 +2829,9 @@ function lineRuns(px) {
   while (edges.length > 3) {
     let worst = -1, worstC = Infinity;
     for (let j = 1; j < edges.length - 2; j++) {
-      const c = edges[j].s < 0 ? Math.min(ext[j - 1], ext[j + 1]) - ext[j] : ext[j] - Math.max(ext[j - 1], ext[j + 1]);
-      const rel = c / Math.max(28, range[Math.floor(edges[j].x / B)]);
+      // faint next to both neighbours: a gap between a bar and a speck stays, the speck goes
+      const c = edges[j].s < 0 ? Math.max(ext[j - 1], ext[j + 1]) - ext[j] : ext[j] - Math.min(ext[j - 1], ext[j + 1]);
+      const rel = c / Math.max(28, wide[Math.floor(edges[j].x / B)]);
       if (rel < worstC) { worstC = rel; worst = j; }
     }
     if (worst < 0 || worstC >= 0.12) break;
@@ -2753,6 +2839,20 @@ function lineRuns(px) {
     const dark = edges[worst - 1].s < 0;
     ext.splice(worst - 1, 3, dark ? Math.min(ext[worst - 1], ext[worst + 1]) : Math.max(ext[worst - 1], ext[worst + 1]));
     edges.splice(worst, 2);
+  }
+  // a faint first or last edge too (a speck in the margin at the end of the line)
+  const endExt = (from, to, dark) => {
+    let e = dark ? 255 : 0;
+    for (let i = Math.max(0, Math.ceil(from)); i <= Math.min(n - 1, Math.floor(to)); i++) e = dark ? Math.min(e, v[i]) : Math.max(e, v[i]);
+    return e;
+  };
+  const faint = (a, b, x) => Math.abs(a - b) / Math.max(28, wide[Math.floor(x / B)]) < 0.12;
+  while (edges.length > 1 && faint(endExt(0, edges[0].x, edges[0].s > 0), ext[0], edges[0].x)) { edges.shift(); ext.shift(); }
+  while (edges.length > 1) {
+    const e = edges[edges.length - 1];
+    if (!faint(endExt(e.x, n - 1, e.s < 0), ext[ext.length - 1], e.x)) break;
+    edges.pop();
+    ext.pop();
   }
   if (!edges.length) return { runs: [n], dark0: false, v, raw };
   const runs = [edges[0].x];
@@ -2901,6 +3001,136 @@ function eanSoftLine(v, edges) {
   }
   return best && best.digits;
 }
+
+// Code 128 and Code 39: item numbers, part numbers and the shop's own labels often use these instead of EAN.
+// Read from the same bar/space widths. Code 128: 3 bars and 3 gaps of 1–4 modules per symbol (11 modules),
+// with a check symbol; matched on bar+gap pairs like the EAN digits. Code 39: 9 elements per character, 3 of them
+// wide, between a start and a stop character (*).
+const C128 = `212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222
+  123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323
+  131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113
+  213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214
+  112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112
+  421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232`
+  .trim().split(/\s+/).map((s) => [...s].map(Number)); // values 0–102, then start A, B, C (103–105)
+const C128_STOP = [2, 3, 3, 1, 1, 1, 2];
+const C128_T = C128.map((p) => [p[0] + p[1], p[1] + p[2], p[2] + p[3], p[3] + p[4], p[0] + p[2] + p[4]]);
+// the symbol made of runs i … i + 5, or −1
+function c128Symbol(r, i) {
+  const k = 11 / (r[i] + r[i + 1] + r[i + 2] + r[i + 3] + r[i + 4] + r[i + 5]);
+  const t1 = (r[i] + r[i + 1]) * k, t2 = (r[i + 1] + r[i + 2]) * k, t3 = (r[i + 2] + r[i + 3]) * k, t4 = (r[i + 3] + r[i + 4]) * k;
+  const bars = (r[i] + r[i + 2] + r[i + 4]) * k;
+  let best = -1, err = Infinity;
+  for (let s = 0; s < C128_T.length; s++) {
+    const p = C128_T[s];
+    const e = Math.abs(t1 - p[0]) + Math.abs(t2 - p[1]) + Math.abs(t3 - p[2]) + Math.abs(t4 - p[3]) + 0.35 * Math.abs(bars - p[4]);
+    if (e < err) { err = e; best = s; }
+  }
+  return err < 1.3 ? best : -1;
+}
+function c128Stop(r, i) {
+  let total = 0;
+  for (let j = i; j < i + 7; j++) total += r[j];
+  const k = 13 / total;
+  let e = 0;
+  for (let j = 0; j < 6; j++) e += Math.abs((r[i + j] + r[i + j + 1]) * k - C128_STOP[j] - C128_STOP[j + 1]);
+  return e < 1.5;
+}
+// the text of the symbols after the start symbol (vals[0]); sets A (capitals, controls), B (text), C (digit pairs)
+function c128Text(vals) {
+  let set = vals[0] - 103, shift = -1, out = '';
+  for (const v of vals.slice(1)) {
+    const cur = shift >= 0 ? shift : set;
+    shift = -1;
+    if (cur === 2) {
+      if (v < 100) out += String(v).padStart(2, '0');
+      else if (v === 100) set = 1;
+      else if (v === 101) set = 0;
+    } else if (v < 96) {
+      const c = cur === 0 ? (v < 64 ? v + 32 : v - 64) : v + 32;
+      if (c >= 32 && c < 127) out += String.fromCharCode(c);
+    } else if (v === 98) shift = 1 - cur;
+    else if (v === 99) set = 2;
+    else if (v === 100 && cur === 0) set = 1;
+    else if (v === 101 && cur === 1) set = 0;
+  }
+  return out.trim();
+}
+function c128At(r, k) {
+  // start symbols begin with a 2-module bar after a light margin (10 modules by the book)
+  if (k < 1 || k + 25 > r.length || r[k - 1] < 2.5 * r[k]) return null;
+  const start = c128Symbol(r, k);
+  if (start < 103) return null;
+  if (r[k - 1] < 5 * (r[k] + r[k + 1] + r[k + 2] + r[k + 3] + r[k + 4] + r[k + 5]) / 11) return null;
+  const vals = [start];
+  for (let i = k + 6; i + 7 <= r.length; i += 6) {
+    if (vals.length >= 3 && c128Stop(r, i)) {
+      let m = 0;
+      for (let j = i; j < i + 7; j++) m += r[j] / 13;
+      if (i + 7 < r.length && r[i + 7] < 5 * m) return null;
+      const check = vals.pop();
+      const sum = vals.reduce((a, v, j) => a + v * (j || 1), 0);
+      return sum % 103 === check ? c128Text(vals) || null : null;
+    }
+    const v = c128Symbol(r, i);
+    if (v < 0 || v > 102) return null;
+    vals.push(v);
+  }
+  return null;
+}
+const C39_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. *$/+%';
+const C39 = new Map(`000110100 100100001 001100001 101100000 000110001 100110000 001110000 000100101 100100100 001100100
+  100001001 001001001 101001000 000011001 100011000 001011000 000001101 100001100 001001100 000011100 100000011 001000011
+  101000010 000010011 100010010 001010010 000000111 100000110 001000110 000010110 110000001 011000001 111000000 010010001
+  110010000 011010000 010000101 110000100 011000100 010010100 010101000 010100010 010001010 000101010`
+  .trim().split(/\s+/).map((p, i) => [p, C39_CHARS[i]]));
+function c39Char(r, i) {
+  const w = r.slice(i, i + 9), s = w.slice().sort((a, b) => b - a);
+  if (s[2] < 1.5 * s[3]) return null; // the 3 wide elements stand clearly apart from the 6 narrow ones
+  const cut = (s[2] + s[3]) / 2;
+  return C39.get(w.map((x) => (x > cut ? 1 : 0)).join('')) || null;
+}
+function c39At(r, k) {
+  // the start character begins with a narrow bar after a light margin
+  if (k < 1 || k + 29 > r.length || r[k - 1] < 4 * r[k] || c39Char(r, k) !== '*') return null;
+  let prev = 0;
+  for (let j = k; j < k + 9; j++) prev += r[j];
+  if (r[k - 1] < 0.4 * prev) return null;
+  let text = '';
+  for (let i = k + 10; i + 9 <= r.length; i += 10) {
+    let w = 0;
+    for (let j = i; j < i + 9; j++) w += r[j];
+    // every character about as wide as the one before, with a narrow gap between them
+    if (r[i - 1] > 0.5 * prev || Math.abs(w - prev) > 0.25 * prev) return null;
+    const c = c39Char(r, i);
+    if (!c) return null;
+    if (c === '*') return text.length >= 2 && (i + 9 >= r.length || r[i + 9] >= 0.4 * w) ? c39Clean(text) : null;
+    text += c;
+    prev = w;
+  }
+  return null;
+}
+// without the optional check character at the end (the sum of the others, mod 43) and the padding spaces
+const C39_VALUES = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%';
+function c39Clean(text) {
+  const body = text.slice(0, -1), sum = [...body].reduce((a, c) => a + C39_VALUES.indexOf(c), 0);
+  if (body.trim().length >= 2 && C39_VALUES[sum % 43] === text[text.length - 1]) text = body;
+  return text.trim() || null;
+}
+function codeInLine(px) {
+  const { runs, dark0, v, raw } = lineRuns(px);
+  if (runs.length >= 27) {
+    const rev = runs.slice().reverse(), revDark0 = (runs.length % 2 === 1) === dark0;
+    for (const [r, d0] of [[runs, dark0], [rev, revDark0]]) {
+      for (let k = d0 ? 2 : 1; k < r.length - 24; k += 2) { // k: bars only (index parity)
+        const code = eanAt(r, k, 13) || eanAt(r, k, 8) || c128At(r, k) || c39At(r, k);
+        if (code) return code;
+      }
+    }
+  }
+  return eanSoftLine(v, raw);
+}
+
 // all codes read in a picture, with how many lines read each one
 function readBarcodes(img, lines = 24) {
   const { width: w, height: h, data } = img, hits = new Map();
@@ -2909,10 +3139,10 @@ function readBarcodes(img, lines = 24) {
   for (let j = 0; j < lines; j++) {
     const y = Math.round(h * (0.1 + 0.8 * j / (lines - 1)));
     for (let x = 0, o = y * w * 4; x < w; x++, o += 4) row[x] = (data[o] + 2 * data[o + 1] + data[o + 2]) / 4;
-    add(eanInLine(row));
+    add(codeInLine(row));
     const x0 = Math.round(w * (0.1 + 0.8 * j / (lines - 1)));
     for (let y2 = 0, o = x0 * 4; y2 < h; y2++, o += w * 4) col[y2] = (data[o] + 2 * data[o + 1] + data[o + 2]) / 4;
-    add(eanInLine(col));
+    add(codeInLine(col));
   }
   return hits;
 }
@@ -2920,9 +3150,9 @@ function readBarcodes(img, lines = 24) {
 // ---------- scanner screen ----------
 // Camera on top, the product found below: check the price, count the stock, put a label on the sheet,
 // or link an unknown code to a product (the item list from the office has no barcodes).
-const scan = { stream: null, timer: 0, paused: true, hits: [], detector: null, code: null, pid: null, dirty: false, torch: false,
+const scan = { stream: null, timer: 0, paused: true, hits: [], detector: null, code: null, pid: null, linkTo: null, dirty: false, torch: false,
   focus: 'continuous', zoom: 1, view: 1, focusTimer: 0, canvas: document.createElement('canvas') };
-const findByCode = (code) => state.products.find((p) => codesOf(p).includes(code) || (p.sku && normCode(p.sku) === code));
+const findByCode = (code) => state.products.find((p) => hasCode(p, code) || (p.sku && codeKey(p.sku) === codeKey(code)));
 
 function openScanner() {
   closeMenu();
@@ -2936,6 +3166,7 @@ function closeScanner() {
   stopCamera();
   $('#scanView').hidden = true;
   scan.code = null;
+  scan.linkTo = null;
   if (scan.dirty) { scan.dirty = false; changed(); }
 }
 $('#btnScan').onclick = openScanner;
@@ -3027,11 +3258,11 @@ async function startCamera() {
   if (!scan.detector && 'BarcodeDetector' in window) {
     try { // Android's own reader, where the WebView offers it; the page's reader runs either way
       const formats = await window.BarcodeDetector.getSupportedFormats();
-      const want = ['ean_13', 'ean_8', 'upc_a'].filter((f) => formats.includes(f));
+      const want = ['ean_13', 'ean_8', 'upc_a', 'code_128', 'code_39'].filter((f) => formats.includes(f));
       if (want.length) scan.detector = new window.BarcodeDetector({ formats: want });
     } catch (e) { /* not available */ }
   }
-  if (!$('#scanSheet').innerHTML) resumeScan(); // a product card stays up when coming back to the app
+  if (!$('#scanSheet').innerHTML || scan.linkTo) resumeScan(); // a product card stays up when coming back to the app
 }
 function stopCamera() {
   clearTimeout(scan.timer);
@@ -3050,7 +3281,9 @@ function resumeScan() {
   $('#scanTip').textContent = t('scanTip');
   scan.hits = [];
   scan.code = null;
-  $('#scanSheet').innerHTML = '';
+  const target = scan.linkTo && state.products.find((x) => x.id === scan.linkTo);
+  $('#scanSheet').innerHTML = target ? `<div class="sc-linkbar"><span class="grow">${esc(t('linkingTo'))}<b>${esc(target.name)}</b></span>
+    <button type="button" class="btn" data-sc="nolink">${esc(t('cancel'))}</button></div>` : '';
   $('#scanAim').classList.remove('hit');
   $('#scanTip').hidden = false;
   clearTimeout(scan.timer);
@@ -3141,7 +3374,6 @@ window.onPhoto = async (ok) => {
 // A linked code drawn black on white in whole screen pixels (every bar exactly so many pixels wide), with the
 // screen at full brightness, so the shop's own scanner can read it off the phone.
 const BC_ICON = '<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M3 5h1.6v14H3zM6 5h2.8v14H6zM10.2 5h1.2v14h-1.2zM12.8 5h2.4v14h-2.4zM16.6 5h1.2v14h-1.2zM19.2 5h1.8v14h-1.8z"/></svg>';
-$('#eShowCode .bc-icon').outerHTML = BC_ICON;
 function eanBits(code) { // 1 = bar, one per module, margins not included
   const d = [...code].map(Number), long = code.length === 13, bits = [];
   const put = (w, bar) => w.forEach((len, i) => { for (let j = 0; j < len; j++) bits.push((i % 2 === 0) === bar ? 1 : 0); });
@@ -3156,10 +3388,21 @@ function eanBits(code) { // 1 = bar, one per module, margins not included
   guard('101');
   return bits;
 }
-function drawEan(canvas, code) {
-  const bits = eanBits(code), n = bits.length, quiet = code.length === 13 ? [11, 9] : [8, 8], total = n + quiet[0] + quiet[1];
+// any other code as Code 128: digit pairs (set C) when it is an even number of digits, else text (set B)
+function c128Bits(text) {
+  const vals = /^\d+$/.test(text) && text.length % 2 === 0 ? [105, ...text.match(/\d\d/g).map(Number)]
+    : [104, ...[...text].map((c) => c.charCodeAt(0) - 32)];
+  vals.push(vals.reduce((a, v, j) => a + v * (j || 1), 0) % 103);
+  const bits = [];
+  for (const w of [...vals.map((v) => C128[v]), C128_STOP]) w.forEach((len, i) => { for (let j = 0; j < len; j++) bits.push(i % 2 === 0 ? 1 : 0); });
+  return bits;
+}
+const drawable = (c) => isEan(c) || /^[\x20-\x7e]+$/.test(c);
+function drawCode(canvas, code) {
+  const ean = isEan(code), bits = ean ? eanBits(code) : c128Bits(code), n = bits.length;
+  const quiet = !ean ? [10, 10] : code.length === 13 ? [11, 9] : [8, 8], total = n + quiet[0] + quiet[1];
   const dpr = window.devicePixelRatio || 1, room = Math.min(canvas.parentElement.clientWidth, 560) * dpr;
-  const mod = Math.max(2, Math.floor(room / total)), w = total * mod, h = Math.round(w * 0.4), gh = h + 5 * mod;
+  const mod = Math.max(1, Math.floor(room / total)), w = total * mod, h = Math.round(Math.min(w * 0.4, 160 * dpr)), gh = h + (ean ? 5 * mod : 0);
   canvas.width = w;
   canvas.height = gh;
   canvas.style.width = `${w / dpr}px`;
@@ -3169,35 +3412,62 @@ function drawEan(canvas, code) {
   g.fillRect(0, 0, w, gh);
   g.fillStyle = '#000';
   bits.forEach((b, i) => {
-    const guard = i < 3 || i >= n - 3 || Math.abs(i - (n - 1) / 2) <= 2; // the guard bars reach lower
+    const guard = ean && (i < 3 || i >= n - 3 || Math.abs(i - (n - 1) / 2) <= 2); // EAN guard bars reach lower
     if (b) g.fillRect((quiet[0] + i) * mod, 0, mod, guard ? gh : h);
   });
 }
-const fmtEan = (c) => (c.length === 13 ? `${c[0]} ${c.slice(1, 7)} ${c.slice(7)}` : `${c.slice(0, 4)} ${c.slice(4)}`);
-let codeShown = null;
-function showCodeOf(code) {
-  codeShown = code;
-  drawEan($('#codeCanvas'), code);
-  $('#codeDigits').textContent = fmtEan(code);
-  $$('#codePick button').forEach((b) => b.classList.toggle('on', b.dataset.code === code));
+const fmtCode = (c) => (!isEan(c) ? c : c.length === 13 ? `${c[0]} ${c.slice(1, 7)} ${c.slice(7)}` : `${c.slice(0, 4)} ${c.slice(4)}`);
+const codeView = { shown: null, list: [], onRemove: null };
+function showCodeOf(c) {
+  codeView.shown = c;
+  drawCode($('#codeCanvas'), c);
+  $('#codeDigits').textContent = fmtCode(c);
+  $$('#codePick button').forEach((b) => b.classList.toggle('on', b.dataset.code === c));
 }
-function showBarcode(p, codes = codesOf(p)) {
-  codes = codes.filter((c) => /^(\d{8}|\d{13})$/.test(c) && eanValid(c));
-  if (!codes.length) return;
+function fillCodePick() {
+  $('#codePick').innerHTML = codeView.list.length > 1
+    ? codeView.list.map((c) => `<button type="button" data-code="${esc(c)}">${esc(fmtCode(c))}</button>`).join('') : '';
+  $$('#codePick button').forEach((b) => { b.onclick = () => showCodeOf(b.dataset.code); });
+  $('#codeCount').textContent = codeView.list.length > 1 ? t('codeCount', { n: codeView.list.length }) : '';
+}
+// onRemove(code) takes a code off the product; without it the codes can only be looked at
+function showBarcode(p, codes = codesOf(p), onRemove = null) {
+  codeView.list = codes.filter(drawable);
+  codeView.onRemove = onRemove;
+  if (!codeView.list.length) return;
   $('#codeName').textContent = p.name || '';
   $('#codePrice').textContent = priceText(p);
-  $('#codePick').innerHTML = codes.length > 1 ? codes.map((c) => `<button type="button" data-code="${c}">${fmtEan(c)}</button>`).join('') : '';
-  $$('#codePick button').forEach((b) => { b.onclick = () => showCodeOf(b.dataset.code); });
+  $('#codeRemove').hidden = !onRemove;
+  fillCodePick();
   $('#codeDlg').showModal();
-  showCodeOf(codes[0]); // once shown: the size follows the screen
+  showCodeOf(codeView.list[0]); // once shown: the size follows the screen
   if (window.Android && window.Android.brightScreen) window.Android.brightScreen(true);
 }
+// the shown code off the product (undo in the message); the next one is shown, or the view closes
+$('#codeRemove').onclick = () => {
+  const c = codeView.shown;
+  if (!c || !codeView.onRemove) return;
+  codeView.onRemove(c);
+  codeView.list = codeView.list.filter((x) => x !== c);
+  if (!codeView.list.length) $('#codeDlg').close();
+  else { fillCodePick(); showCodeOf(codeView.list[0]); }
+};
 $('#codeClose').onclick = () => $('#codeDlg').close();
 $('#codeDlg').addEventListener('close', () => {
-  codeShown = null;
+  codeView.shown = null;
   if (window.Android && window.Android.brightScreen) window.Android.brightScreen(false);
 });
-window.addEventListener('resize', () => { if (codeShown) showCodeOf(codeShown); });
+// a product's codes in the barcode view, removable
+function showProductCodes(p) {
+  showBarcode(p, codesOf(p), (c) => {
+    const before = codesOf(p).slice();
+    p.codes = before.filter((x) => x !== c);
+    if (!p.codes.length) delete p.codes;
+    changed();
+    toast(t('codeRemoved'), t('undo'), () => { p.codes = before; changed(); });
+  });
+}
+window.addEventListener('resize', () => { if (codeView.shown) showCodeOf(codeView.shown); });
 
 // one camera frame: the square in the middle of the screen (a little more than the drawn frame) is read
 async function scanFrame() {
@@ -3220,8 +3490,8 @@ async function scanFrame() {
     if (scan.detector) {
       try {
         for (const b of await scan.detector.detect(cv)) {
-          const code = normCode(b.rawValue);
-          if ((code.length === 13 || code.length === 8) && eanValid(code)) found.set(code, (found.get(code) || 0) + 2);
+          const code = b.format === 'code_39' ? c39Clean(b.rawValue) || '' : normCode(b.rawValue);
+          if (validCode(code)) found.set(code, (found.get(code) || 0) + 2);
         }
       } catch (e) { /* skip this frame */ }
     }
@@ -3254,7 +3524,23 @@ function gotCode(code) {
   $('#scanAim').classList.add('hit');
   $('#scanTip').hidden = true;
   if (navigator.vibrate) navigator.vibrate(60);
+  const target = scan.linkTo && state.products.find((x) => x.id === scan.linkTo);
+  scan.linkTo = null;
+  if (target) { linkCode(target, code); return; }
   showCode(code);
+}
+// another code for a product: a second packaging, the box, an old label …
+function linkCode(p, code) {
+  scan.code = code;
+  const other = findByCode(code);
+  if (other && other !== p) { toast(t('codeTaken', { name: other.name })); showScanProduct(other); return; }
+  if (!other) {
+    p.codes = withCodes(p, [code]);
+    scan.dirty = true;
+    save();
+    toast(t('linked', { name: p.name }));
+  }
+  showScanProduct(p);
 }
 function showCode(code) {
   scan.code = code;
@@ -3265,12 +3551,14 @@ function showCode(code) {
 function showScanProduct(p) {
   scan.pid = p.id;
   const onSheet = state.sheet.filter((it) => it.pid === p.id).reduce((a, it) => a + it.copies, 0);
-  const viaCode = codesOf(p).includes(scan.code);
+  const viaCode = !!scan.code && hasCode(p, scan.code);
+  const codes = scan.code && !viaCode ? [scan.code, ...codesOf(p)] : codesOf(p);
   $('#scanSheet').innerHTML = `
     <div class="sc-head"><div class="grow"><p class="sc-name">${esc(p.name)}</p>
-      <div class="sc-sub">${esc([p.detail, p.cat, p.sku].filter(Boolean).join(' · '))}</div>
-      ${scan.code ? `<span class="sc-code">${esc(scan.code)}</span>` : ''}</div>
+      <div class="sc-sub">${esc([p.detail, p.cat, p.sku].filter(Boolean).join(' · '))}</div></div>
       <div class="sc-price">${esc(priceText(p)) || '–'}</div></div>
+    <div class="sc-codes">${codes.map((c) => `<span class="sc-code${scan.code && codeKey(c) === codeKey(scan.code) ? ' on' : ''}">${esc(c)}</span>`).join('')}
+      <button type="button" class="sc-addcode" data-sc="addcode">+ ${esc(t('anotherCode'))}</button></div>
     <div class="sc-stock"><span class="lbl">${esc(t('scanStock'))}</span>
       <div class="stepper"><button type="button" data-sc="dec" aria-label="-">−</button><input id="scStock" inputmode="decimal" enterkeyhint="done" value="${hasStock(p) ? fmtQty(p.stock) : ''}" placeholder="–"><button type="button" data-sc="inc" aria-label="+">+</button></div></div>
     <p class="sc-state" id="scState">${scanStateHtml(p)}</p>
@@ -3304,7 +3592,7 @@ function showScanUnknown(code) {
 }
 function renderScanResults() {
   const q = norm($('#scFind').value), box = $('#scResults');
-  const list = q ? state.products.filter((p) => !codesOf(p).includes(scan.code)
+  const list = q ? state.products.filter((p) => !hasCode(p, scan.code)
     && norm(`${p.name} ${p.detail} ${p.sku || ''}`).includes(q)).sort(byName).slice(0, 8) : [];
   box.hidden = !list.length;
   box.innerHTML = list.map((p) => `<li><button type="button" data-link="${p.id}"><span class="grow"><b>${esc(p.name)}</b>
@@ -3314,7 +3602,8 @@ function renderScanResults() {
 function showManualEntry() {
   scan.paused = true;
   clearTimeout(scan.timer);
-  $('#scanSheet').innerHTML = `<label class="field"><span>${esc(t('manualCode'))}</span><input id="scManual" inputmode="numeric" enterkeyhint="go" autocomplete="off"></label>
+  const target = scan.linkTo && state.products.find((x) => x.id === scan.linkTo);
+  $('#scanSheet').innerHTML = `${target ? `<p class="sc-linknote">${esc(t('linkingTo'))}<b>${esc(target.name)}</b></p>` : ''}<label class="field"><span>${esc(t('manualCode'))}</span><input id="scManual" inputmode="numeric" enterkeyhint="go" autocomplete="off"></label>
     <div class="row"><button class="btn grow" data-sc="cancel">${esc(t('cancel'))}</button><button class="btn primary grow" data-sc="manual">${esc(t('ok'))}</button></div>`;
   $('#scManual').focus();
 }
@@ -3322,20 +3611,31 @@ $('#scanKeys').onclick = showManualEntry;
 function manualCode() {
   const raw = $('#scManual').value.trim(), code = normCode(raw);
   if (!raw) return;
+  const target = scan.linkTo && state.products.find((x) => x.id === scan.linkTo);
+  if (target) {
+    if (!validCode(code)) { toast(t('badCode')); return; }
+    scan.linkTo = null;
+    linkCode(target, code);
+    return;
+  }
   // an item number from the shelf works too
   const p = findByCode(code) || state.products.find((x) => x.sku && norm(x.sku) === norm(raw));
-  if (p) { scan.code = (code.length === 13 || code.length === 8) && eanValid(code) ? code : null; showScanProduct(p); return; }
-  if ((code.length === 13 || code.length === 8) && eanValid(code)) showScanUnknown(code);
+  if (p) { scan.code = validCode(code) ? code : null; showScanProduct(p); return; }
+  if (validCode(code)) showScanUnknown(code);
   else toast(t('badCode'));
 }
-const scanNext = () => { if (scan.dirty) { scan.dirty = false; changed(); } if (scan.stream) resumeScan(); else showManualEntry(); };
+const scanNext = () => {
+  scan.linkTo = null;
+  if (scan.dirty) { scan.dirty = false; changed(); }
+  if (scan.stream) resumeScan(); else showManualEntry();
+};
 
 $('#scanSheet').addEventListener('click', (e) => {
   const link = e.target.closest('[data-link]');
   if (link) {
     const p = state.products.find((x) => x.id === link.dataset.link);
     if (!p || !scan.code) return;
-    p.codes = [...codesOf(p), scan.code];
+    p.codes = withCodes(p, [scan.code]);
     scan.dirty = true;
     save();
     toast(t('linked', { name: p.name }));
@@ -3346,10 +3646,25 @@ $('#scanSheet').addEventListener('click', (e) => {
   if (!b) return;
   const act = b.dataset.sc, p = scanProduct();
   if (act === 'next') { scanNext(); return; }
+  // not linking after all: back to the product it was for
+  if ((act === 'nolink' || act === 'cancel') && p && scan.linkTo === p.id) {
+    scan.linkTo = null;
+    scan.paused = true;
+    clearTimeout(scan.timer);
+    $('#scanTip').hidden = true;
+    showScanProduct(p);
+    return;
+  }
   if (act === 'cancel') { if (scan.stream) resumeScan(); else closeScanner(); return; }
   if (act === 'manual') { manualCode(); return; }
   if (act === 'new') { openEditor('new', { codes: [scan.code] }, (np) => showScanProduct(np)); return; }
+  if (act === 'nolink') { scanNext(); return; }
   if (!p) return;
+  if (act === 'addcode') {
+    scan.linkTo = p.id;
+    if (scan.stream) resumeScan(); else showManualEntry();
+    return;
+  }
   if (act === 'inc' || act === 'dec') {
     const v = (hasStock(p) ? p.stock : 0) + (act === 'inc' ? 1 : -1);
     setScanStock(p, v);
@@ -3373,7 +3688,7 @@ $('#scanSheet').addEventListener('click', (e) => {
   } else if (act === 'edit') {
     openEditor('product', p, (sp) => showScanProduct(sp));
   } else if (act === 'unlink') {
-    p.codes = codesOf(p).filter((c) => c !== scan.code);
+    p.codes = codesOf(p).filter((c) => codeKey(c) !== codeKey(scan.code));
     if (!p.codes.length) delete p.codes;
     scan.dirty = true;
     save();
