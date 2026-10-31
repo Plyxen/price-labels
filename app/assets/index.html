@@ -107,6 +107,10 @@ ul.list{list-style:none;padding:0;margin:0 -16px;background:var(--surface);borde
 .bc:active{background:var(--surface-2)}
 .add .cnt{position:absolute;top:-7px;right:-7px;background:var(--ink);color:var(--on-ink);font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:3px;padding:0 5px;line-height:20px}
 .add.no{border-color:transparent;background:none;color:var(--muted);font-size:18px}
+/* on the sheet already: − and + joined into one control */
+.pair{display:flex;flex:none}
+.pair .add:first-child{border-radius:var(--radius) 0 0 var(--radius);border-right-width:0}
+.pair .add:last-child{border-radius:0 var(--radius) var(--radius) 0}
 .empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:15px}
 .empty b{display:block;color:var(--text);font-size:17px;margin-bottom:6px}
 .empty small{display:block;margin-top:8px;font-size:13.5px}
@@ -1402,6 +1406,12 @@ function addToSheet(src, n = 1, pid = null) {
   if (it) { Object.assign(it, fields); it.copies = Math.min(999, it.copies + n); if (pid) it.pid = pid; }
   else state.sheet.push({ id: uid(), pid, ...fields, copies: n });
 }
+// one copy fewer of a product's label; at 0 it leaves the sheet
+function takeFromSheet(pid) {
+  const it = state.sheet.findLast((x) => x.pid === pid);
+  if (!it) return;
+  if (--it.copies <= 0) state.sheet = state.sheet.filter((x) => x !== it);
+}
 
 // ---------- UI: labels tab ----------
 // a label typed by hand, in a dialog that stays open so several can be added in a row
@@ -1625,6 +1635,7 @@ function renderProducts() {
         : ''}</li>`;
     }
     const cnt = onSheet.get(p.id);
+    const add = `<button class="add" data-act="add" aria-label="+">+${cnt ? `<span class="cnt">${cnt}</span>` : ''}</button>`;
     // amounts mode: the product's own amount and full stock typed straight into the list; the grey number is the group's
     const inherited = typeof p.min === 'number' ? null : levelOf(p);
     html += `<li class="item" data-id="${p.id}">
@@ -1634,7 +1645,7 @@ function renderProducts() {
       <input class="amt" data-f="full" inputmode="decimal" enterkeyhint="next" aria-label="${esc(t('colFull'))}" value="${typeof p.full === 'number' ? fmtQty(p.full) : ''}">`
         : `<span class="price">${esc(priceText(p))}</span>${codesOf(p).length
           ? `<button class="bc" data-act="code" aria-label="${esc(t('showCode'))}">${BC_ICON}</button>` : ''}
-      <button class="add" data-act="add" aria-label="+">+${cnt ? `<span class="cnt">${cnt}</span>` : ''}</button>`}
+      ${cnt ? `<span class="pair"><button class="add" data-act="less" aria-label="−">−</button>${add}</span>` : add}`}
     </li>`;
   }
   const left = list.length - prodFilter.limit;
@@ -1675,6 +1686,7 @@ $('#prodList').addEventListener('click', (e) => {
   if (!p) return;
   if (act === 'edit') { openEditor('product', p); return; }
   if (act === 'code') { showProductCodes(p); return; }
+  if (act === 'less') { takeFromSheet(p.id); changed(); return; }
   addToSheet(p, 1, p.id); // a single tap is deliberate, so it works even at 0 stock
   changed();
   toast(isEmpty(p) ? `${t('added')} · ${t('zeroStock')}` : t('added'));
